@@ -1,0 +1,13 @@
+node_modules/
+dist/
+dist-ssr/
+**/bin/
+**/obj/
+**/App_Data/
+**/appsettings.Local.json
+*.local
+*.log
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
