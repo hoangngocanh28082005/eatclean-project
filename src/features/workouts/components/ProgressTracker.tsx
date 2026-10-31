@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   TrendingDown,
   TrendingUp,
@@ -11,7 +11,7 @@ import {
   Clock,
   Sparkles,
 } from 'lucide-react'
-import type { WeightLog, WorkoutLog } from '../models/Workout'
+import type { WeightLog, WorkoutLog } from '../models/Workout.ts'
 
 interface ProgressTrackerProps {
   weightLogs: WeightLog[]
@@ -20,6 +20,8 @@ interface ProgressTrackerProps {
   onDeleteWeight: (id: string) => void
   onAddCustomWorkout: (title: string, durationMinutes: number, calories?: number, note?: string) => void
 }
+
+type TimeRange = 'week' | 'month' | 'all'
 
 export default function ProgressTracker({
   weightLogs,
@@ -34,6 +36,9 @@ export default function ProgressTracker({
   const [weightNote, setWeightNote] = useState('')
   const [isAddingWeight, setIsAddingWeight] = useState(false)
 
+  // Time range filter for chart (Lỗi 3 fix)
+  const [timeRange, setTimeRange] = useState<TimeRange>('all')
+
   // Custom workout input states
   const [isAddingWorkout, setIsAddingWorkout] = useState(false)
   const [customTitle, setCustomTitle] = useState('')
@@ -41,12 +46,21 @@ export default function ProgressTracker({
   const [customCalories, setCustomCalories] = useState('80')
   const [customNote, setCustomNote] = useState('')
 
+  // Filter weights by time range
+  const filteredWeights = useMemo(() => {
+    const sorted = [...weightLogs].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    )
+    if (timeRange === 'all') return sorted
+
+    const count = timeRange === 'week' ? 7 : 30
+    return sorted.slice(-Math.min(sorted.length, count))
+  }, [weightLogs, timeRange])
+
   // Weight statistics calculation
-  const sortedWeights = [...weightLogs].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  )
-  const firstWeight = sortedWeights.length > 0 ? sortedWeights[0].weightKg : 0
-  const currentWeight = sortedWeights.length > 0 ? sortedWeights[sortedWeights.length - 1].weightKg : 0
+  const firstWeight = filteredWeights.length > 0 ? filteredWeights[0].weightKg : 0
+  const currentWeight =
+    filteredWeights.length > 0 ? filteredWeights[filteredWeights.length - 1].weightKg : 0
   const weightDiff = (currentWeight - firstWeight).toFixed(1)
   const isWeightReduced = Number(weightDiff) < 0
 
@@ -78,26 +92,33 @@ export default function ProgressTracker({
     setIsAddingWorkout(false)
   }
 
-  // Generate SVG Line Chart coordinates
+  // Generate SVG Line Chart coordinates with adaptive spacing
   const renderWeightChart = () => {
-    if (sortedWeights.length < 2) {
+    if (filteredWeights.length < 2) {
       return (
-        <div className="flex h-44 items-center justify-center rounded-2xl bg-cream-100/50 text-xs text-forest-900/60">
-          Cần ít nhất 2 lần ghi nhận cân nặng để hiển thị biểu đồ tiến độ.
+        <div className="flex h-44 flex-col items-center justify-center rounded-2xl bg-cream-100/50 p-4 text-center text-xs text-forest-900/60">
+          <p className="font-semibold text-forest-900">
+            {filteredWeights.length === 1
+              ? `Đã ghi nhận 1 lần (${filteredWeights[0].weightKg} kg vào ${filteredWeights[0].date})`
+              : 'Chưa có dữ liệu cân nặng trong khoảng thời gian này'}
+          </p>
+          <p className="mt-1">
+            Ghi nhận ít nhất 2 ngày đo khác nhau để hệ thống vẽ biểu đồ tiến độ.
+          </p>
         </div>
       )
     }
 
-    const minW = Math.min(...sortedWeights.map((w) => w.weightKg)) - 1
-    const maxW = Math.max(...sortedWeights.map((w) => w.weightKg)) + 1
+    const minW = Math.min(...filteredWeights.map((w) => w.weightKg)) - 1
+    const maxW = Math.max(...filteredWeights.map((w) => w.weightKg)) + 1
     const rangeW = maxW - minW || 1
 
-    const width = 500
-    const height = 140
-    const padding = 25
+    const width = 540
+    const height = 150
+    const padding = 30
 
-    const points = sortedWeights.map((w, idx) => {
-      const x = padding + (idx / (sortedWeights.length - 1)) * (width - padding * 2)
+    const points = filteredWeights.map((w, idx) => {
+      const x = padding + (idx / (filteredWeights.length - 1)) * (width - padding * 2)
       const y = height - padding - ((w.weightKg - minW) / rangeW) * (height - padding * 2)
       return { x, y, ...w }
     })
@@ -108,7 +129,7 @@ export default function ProgressTracker({
 
     return (
       <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full min-w-[340px] overflow-visible">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full min-w-[360px] overflow-visible">
           {/* Subtle Gridlines */}
           <line
             x1={padding}
@@ -197,7 +218,7 @@ export default function ProgressTracker({
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-forest-900">{currentWeight}</span>
             <span className="text-sm font-semibold text-forest-900/60">kg</span>
-            {sortedWeights.length > 1 && (
+            {filteredWeights.length > 1 && (
               <span
                 className={`ml-auto inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-bold ${
                   isWeightReduced ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
@@ -213,8 +234,8 @@ export default function ProgressTracker({
             )}
           </div>
           <p className="mt-2 text-xs text-forest-900/60">
-            {sortedWeights.length > 1
-              ? `So với ngày đầu tiên (${firstWeight} kg)`
+            {filteredWeights.length > 1
+              ? `Biến động trong kỳ chọn: ${weightDiff > '0' ? '+' : ''}${weightDiff} kg`
               : 'Hãy ghi nhận thêm để theo dõi biến đổi'}
           </p>
         </div>
@@ -252,24 +273,63 @@ export default function ProgressTracker({
         </div>
       </div>
 
-      {/* Weight Chart Section */}
+      {/* Weight Chart Section with Week/Month Selector */}
       <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-sage-200">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-bold text-forest-900">Biểu đồ tiến độ cân nặng</h3>
             <p className="text-xs text-forest-900/60">
-              Cập nhật cân nặng đều đặn để thấy rõ chuyển biến cơ thể theo tuần/tháng
+              Theo dõi biến chuyển vóc dáng theo tuần hoặc theo tháng
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsAddingWeight(!isAddingWeight)}
-            className="inline-flex items-center gap-1.5 self-start rounded-full bg-forest-800 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-forest-700"
-          >
-            <Plus className="size-3.5" />
-            {isAddingWeight ? 'Đóng form' : 'Ghi cân nặng hôm nay'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Time range buttons (Fix 3) */}
+            <div className="inline-flex rounded-xl bg-cream-100 p-1 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setTimeRange('week')}
+                className={`rounded-lg px-2.5 py-1 transition-all ${
+                  timeRange === 'week'
+                    ? 'bg-forest-800 text-white shadow-xs'
+                    : 'text-forest-900/70 hover:text-forest-900'
+                }`}
+              >
+                7 ngày qua
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeRange('month')}
+                className={`rounded-lg px-2.5 py-1 transition-all ${
+                  timeRange === 'month'
+                    ? 'bg-forest-800 text-white shadow-xs'
+                    : 'text-forest-900/70 hover:text-forest-900'
+                }`}
+              >
+                30 ngày qua
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeRange('all')}
+                className={`rounded-lg px-2.5 py-1 transition-all ${
+                  timeRange === 'all'
+                    ? 'bg-forest-800 text-white shadow-xs'
+                    : 'text-forest-900/70 hover:text-forest-900'
+                }`}
+              >
+                Tất cả
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsAddingWeight(!isAddingWeight)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-forest-800 px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-forest-700"
+            >
+              <Plus className="size-3.5" />
+              {isAddingWeight ? 'Đóng' : 'Ghi cân nặng'}
+            </button>
+          </div>
         </div>
 
         {/* Add weight form */}
@@ -339,11 +399,14 @@ export default function ProgressTracker({
 
         {/* History table */}
         <div className="mt-6 border-t border-sage-100 pt-4">
-          <h4 className="text-xs font-bold tracking-wider text-forest-700 uppercase">
-            Lịch sử các lần cân
-          </h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold tracking-wider text-forest-700 uppercase">
+              Lịch sử các lần cân ({filteredWeights.length})
+            </h4>
+          </div>
+
           <div className="mt-3 max-h-48 overflow-y-auto divide-y divide-sage-100 text-xs">
-            {sortedWeights
+            {filteredWeights
               .slice()
               .reverse()
               .map((w) => (

@@ -3,7 +3,7 @@ import type {
   WeightLog,
   MealLogItem,
   InAppNotification,
-} from '../models/Workout'
+} from '../models/Workout.ts'
 
 const WORKOUT_LOGS_KEY = 'offimeal.workout_logs.v1'
 const WEIGHT_LOGS_KEY = 'offimeal.weight_logs.v1'
@@ -14,8 +14,10 @@ const REMINDER_SETTINGS_KEY = 'offimeal.reminder_settings.v1'
 export interface ReminderSettings {
   waterReminderEnabled: boolean
   waterIntervalMinutes: number
+  lastWaterReminderTimestamp?: number
   stretchReminderEnabled: boolean
   stretchIntervalMinutes: number
+  lastStretchReminderTimestamp?: number
 }
 
 // ---------------------------------------------------------------------------
@@ -33,30 +35,37 @@ function getInitialWeightLogs(): WeightLog[] {
   return [
     {
       id: 'w-1',
-      date: formatDate(21),
-      weightKg: 64.5,
-      note: 'Bắt đầu dùng gói Eat Clean tuần 1',
+      date: formatDate(28),
+      weightKg: 65.0,
+      note: 'Khởi đầu đăng ký gói Eat Clean OffiMeal',
       createdAt: new Date().toISOString(),
     },
     {
       id: 'w-2',
-      date: formatDate(14),
-      weightKg: 63.8,
-      note: 'Sau 1 tuần tập giãn cơ và ăn đúng bữa',
+      date: formatDate(21),
+      weightKg: 64.3,
+      note: 'Tuần 1: Bắt đầu tập cardio nhẹ 5-10 phút',
       createdAt: new Date().toISOString(),
     },
     {
       id: 'w-3',
-      date: formatDate(7),
-      weightKg: 63.1,
-      note: 'Cơ thể nhẹ nhàng hơn, bớt mỏi lưng',
+      date: formatDate(14),
+      weightKg: 63.6,
+      note: 'Tuần 2: Giảm mỏi lưng, ăn uống đúng giờ',
       createdAt: new Date().toISOString(),
     },
     {
       id: 'w-4',
+      date: formatDate(7),
+      weightKg: 63.0,
+      note: 'Tuần 3: Cơ thể nhẹ nhõm, bớt thèm đồ ngọt',
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 'w-5',
       date: formatDate(0),
       weightKg: 62.4,
-      note: 'Cân vào sáng sớm trước khi ăn',
+      note: 'Cân vào sáng sớm trước khi ăn sáng',
       createdAt: new Date().toISOString(),
     },
   ]
@@ -102,45 +111,43 @@ function getInitialWorkoutLogs(): WorkoutLog[] {
   ]
 }
 
-function getInitialMealLogs(): MealLogItem[] {
-  const todayStr = new Date().toISOString().split('T')[0]
+function getDefaultDayMeals(dateStr: string): MealLogItem[] {
   return [
     {
-      id: 'ml-1',
-      date: todayStr,
+      id: `ml-${dateStr}-1`,
+      date: dateStr,
       mealType: 'breakfast',
       mealTitle: 'Bánh mì ngũ cốc nguyên cám trứng chần bơ',
       calories: 380,
-      isConsumed: true,
-      confirmedAt: '07:45',
-      note: 'Ăn tại nhà trước giờ đi làm',
+      isConsumed: false,
+      note: 'Bữa sáng cung cấp năng lượng chậm và chất béo tốt',
     },
     {
-      id: 'ml-2',
-      date: todayStr,
+      id: `ml-${dateStr}-2`,
+      date: dateStr,
       mealType: 'lunch',
       mealTitle: 'OffiMeal: Ức gà nướng thảo mộc, gạo lứt & bông cải xanh',
       calories: 520,
-      isConsumed: true,
-      confirmedAt: '12:15',
-      note: 'Nhận cơm lúc 11:20 tại sảnh văn phòng, ăn ngon miệng',
+      isConsumed: false,
+      note: 'Bữa trưa Healthy OffiMeal giao trước 11:30',
     },
     {
-      id: 'ml-3',
-      date: todayStr,
+      id: `ml-${dateStr}-3`,
+      date: dateStr,
       mealType: 'snack',
-      mealTitle: 'Táo tươi & hạnh nhân nướng mộc',
+      mealTitle: 'Táo tươi giòn & hạt hạnh nhân nướng mộc',
       calories: 160,
       isConsumed: false,
-      note: 'Bữa phụ buổi chiều lúc 15:30',
+      note: 'Bữa phụ xế chiều 15:30 giảm cơn buồn ngủ',
     },
     {
-      id: 'ml-4',
-      date: todayStr,
+      id: `ml-${dateStr}-4`,
+      date: dateStr,
       mealType: 'dinner',
-      mealTitle: 'Salad cá hồi áp chảo sốt chanh leo',
+      mealTitle: 'Salad cá hồi áp chảo sốt chanh leo & hạt chia',
       calories: 450,
       isConsumed: false,
+      note: 'Bữa tối nhẹ nhàng giàu Omega-3, hỗ trợ phục hồi cơ',
     },
   ]
 }
@@ -257,24 +264,49 @@ export const workoutProgressService = {
     }
   },
 
-  // Meal confirmation logs
-  getMealLogs(): MealLogItem[] {
+  // Meal confirmation logs (by date)
+  getAllMealLogs(): MealLogItem[] {
     try {
       const data = localStorage.getItem(MEAL_LOGS_KEY)
-      if (!data) {
-        const initial = getInitialMealLogs()
-        localStorage.setItem(MEAL_LOGS_KEY, JSON.stringify(initial))
-        return initial
-      }
+      if (!data) return []
       return JSON.parse(data)
     } catch {
-      return getInitialMealLogs()
+      return []
     }
   },
 
+  getMealLogsForDate(targetDate?: string): MealLogItem[] {
+    const dateStr = targetDate || new Date().toISOString().split('T')[0]
+    const all = this.getAllMealLogs()
+    const forDay = all.filter((m) => m.date === dateStr)
+
+    if (forDay.length > 0) {
+      return forDay
+    }
+
+    // Initialize clean default day meals if not present
+    const defaultMeals = getDefaultDayMeals(dateStr)
+    // If today, mark breakfast/lunch as sample confirmed for demo
+    const todayStr = new Date().toISOString().split('T')[0]
+    if (dateStr === todayStr) {
+      defaultMeals[0].isConsumed = true
+      defaultMeals[0].confirmedAt = '07:45'
+      defaultMeals[1].isConsumed = true
+      defaultMeals[1].confirmedAt = '12:15'
+    }
+
+    const updated = [...all, ...defaultMeals]
+    try {
+      localStorage.setItem(MEAL_LOGS_KEY, JSON.stringify(updated))
+    } catch {
+      // ignore
+    }
+    return defaultMeals
+  },
+
   toggleMealConsumed(id: string): MealLogItem | null {
-    const meals = this.getMealLogs()
-    const target = meals.find((m) => m.id === id)
+    const all = this.getAllMealLogs()
+    const target = all.find((m) => m.id === id)
     if (!target) return null
 
     target.isConsumed = !target.isConsumed
@@ -286,7 +318,7 @@ export const workoutProgressService = {
     }
 
     try {
-      localStorage.setItem(MEAL_LOGS_KEY, JSON.stringify(meals))
+      localStorage.setItem(MEAL_LOGS_KEY, JSON.stringify(all))
     } catch {
       // ignore
     }
@@ -341,8 +373,10 @@ export const workoutProgressService = {
     return {
       waterReminderEnabled: true,
       waterIntervalMinutes: 45,
+      lastWaterReminderTimestamp: Date.now(),
       stretchReminderEnabled: true,
       stretchIntervalMinutes: 90,
+      lastStretchReminderTimestamp: Date.now(),
     }
   },
 

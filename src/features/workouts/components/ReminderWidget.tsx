@@ -1,35 +1,27 @@
 import { useState } from 'react'
 import { Droplet, Bell, AlertCircle, Volume2, Check } from 'lucide-react'
-import {
-  workoutProgressService,
-  type ReminderSettings,
-} from '../services/workoutProgressService'
+import { useSessionReminders } from '../hooks/useSessionReminders.ts'
 
 export default function ReminderWidget() {
-  const [settings, setSettings] = useState<ReminderSettings>(
-    workoutProgressService.getReminderSettings()
-  )
+  const { activeReminder, triggerReminder, dismissReminder, settings, updateSettings } =
+    useSessionReminders()
   const [isSaved, setIsSaved] = useState(false)
-  const [activeToast, setActiveToast] = useState<string | null>(null)
 
   const handleToggleWater = () => {
-    const updated = { ...settings, waterReminderEnabled: !settings.waterReminderEnabled }
-    setSettings(updated)
-    workoutProgressService.saveReminderSettings(updated)
+    updateSettings({ ...settings, waterReminderEnabled: !settings.waterReminderEnabled })
     flashSaved()
   }
 
   const handleToggleStretch = () => {
-    const updated = { ...settings, stretchReminderEnabled: !settings.stretchReminderEnabled }
-    setSettings(updated)
-    workoutProgressService.saveReminderSettings(updated)
+    updateSettings({ ...settings, stretchReminderEnabled: !settings.stretchReminderEnabled })
     flashSaved()
   }
 
-  const handleIntervalChange = (key: 'waterIntervalMinutes' | 'stretchIntervalMinutes', val: number) => {
-    const updated = { ...settings, [key]: val }
-    setSettings(updated)
-    workoutProgressService.saveReminderSettings(updated)
+  const handleIntervalChange = (
+    key: 'waterIntervalMinutes' | 'stretchIntervalMinutes',
+    val: number
+  ) => {
+    updateSettings({ ...settings, [key]: val })
     flashSaved()
   }
 
@@ -38,28 +30,19 @@ export default function ReminderWidget() {
     setTimeout(() => setIsSaved(false), 2000)
   }
 
-  const testReminder = (type: 'water' | 'stretch') => {
-    if (type === 'water') {
-      setActiveToast('💧 Đã đến giờ uống nước! Hãy uống một cốc 200-250ml nước ấm để tỉnh táo.')
-    } else {
-      setActiveToast('🧘 Hãy rời mắt khỏi màn hình! Đứng dậy xoay cổ, vươn vai 3 phút nhé.')
-    }
-    setTimeout(() => setActiveToast(null), 5000)
-  }
-
   return (
     <div className="space-y-6">
-      {/* Toast Alert Simulation */}
-      {activeToast && (
+      {/* Active Toast Notification */}
+      {activeReminder && (
         <div className="fixed top-24 right-6 z-50 flex max-w-sm items-center gap-3 rounded-2xl bg-forest-900 p-4 text-xs font-semibold text-white shadow-2xl ring-2 ring-accent-400 animate-bounce">
           <Bell className="size-5 shrink-0 text-accent-400" />
-          <div className="flex-1">{activeToast}</div>
+          <div className="flex-1">{activeReminder.message}</div>
           <button
             type="button"
-            onClick={() => setActiveToast(null)}
-            className="text-white/60 hover:text-white"
+            onClick={dismissReminder}
+            className="rounded-lg bg-white/20 px-2 py-1 text-[11px] font-bold text-white hover:bg-white/30"
           >
-            ✕
+            Đã xong
           </button>
         </div>
       )}
@@ -70,7 +53,7 @@ export default function ReminderWidget() {
         <div className="text-xs leading-relaxed text-forest-900">
           <strong className="font-bold">Cơ chế nhắc nhở phiên làm việc:</strong>
           <p className="mt-0.5">
-            Tính năng nhắc lịch này hoạt động trực tiếp trong khi bạn đang mở trình duyệt làm việc.
+            Tính năng nhắc lịch này đang chạy timer trực tiếp trong khi bạn mở trình duyệt làm việc.
             Hệ thống <em>không hứa hẹn nhắc nhở khi bạn đóng hoàn toàn trình duyệt</em> (tính năng gửi
             thông báo đẩy nền hoặc email nhắc nhở định kỳ sẽ nằm ở bản cập nhật tiếp theo).
           </p>
@@ -128,7 +111,7 @@ export default function ReminderWidget() {
 
             <button
               type="button"
-              onClick={() => testReminder('water')}
+              onClick={() => triggerReminder('water', true)}
               className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-forest-700 hover:text-forest-900"
             >
               <Volume2 className="size-3.5" />
@@ -146,7 +129,7 @@ export default function ReminderWidget() {
               </div>
               <div>
                 <h4 className="text-sm font-bold text-forest-900">Nhắc giãn cơ & Đứng dậy</h4>
-                <p className="text-xs text-forest-900/60">Giảm tải áp lực đĩa đệm và cổ</p>
+                <p className="text-xs text-forest-900/60">Giảm tải áp lực đĩa đệm và cổ vai gáy</p>
               </div>
             </div>
 
@@ -186,7 +169,7 @@ export default function ReminderWidget() {
 
             <button
               type="button"
-              onClick={() => testReminder('stretch')}
+              onClick={() => triggerReminder('stretch', true)}
               className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-forest-700 hover:text-forest-900"
             >
               <Volume2 className="size-3.5" />

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { Menu, X, User, ShoppingBag } from 'lucide-react'
+import { Menu, X, User, ShoppingBag, Bell } from 'lucide-react'
 import BrandLogo from '@/shared/components/ui/BrandLogo'
 import { navLinks } from '@/shared/data/navigation'
 import Button from '@/shared/components/ui/Button'
 import { useAuth } from '@/features/accounts/context/AuthContext'
+import NotificationModal from '@/features/workouts/components/NotificationModal'
+import { workoutProgressService } from '@/features/workouts/services/workoutProgressService'
 
 const mobileMenuLinkClasses = ({ isActive }: { isActive: boolean }) =>
   `block rounded-xl px-4 py-3 text-base font-medium transition-colors duration-200 ${
@@ -17,6 +19,22 @@ export default function Navbar() {
   const { user } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const closeMenu = () => setIsMenuOpen(false)
+
+  // In-app notifications state
+  const [isNotifOpen, setIsNotifOpen] = useState(false)
+  const [notifications, setNotifications] = useState(() => workoutProgressService.getNotifications())
+
+  const unreadNotifsCount = notifications.filter((n) => !n.isRead).length
+
+  const handleMarkNotifRead = (id: string) => {
+    workoutProgressService.markNotificationAsRead(id)
+    setNotifications(workoutProgressService.getNotifications())
+  }
+
+  const handleMarkAllNotifsRead = () => {
+    workoutProgressService.markAllNotificationsAsRead()
+    setNotifications(workoutProgressService.getNotifications())
+  }
 
   // Lock body scroll while the mobile menu is open
   // (route changes close the menu via onClick on each NavLink)
@@ -64,6 +82,22 @@ export default function Navbar() {
 
         {/* Right actions */}
         <div className="flex items-center gap-1 sm:gap-2">
+          {/* Notification bell button */}
+          <button
+            type="button"
+            onClick={() => setIsNotifOpen(true)}
+            className={`relative ${iconButtonClasses}`}
+            aria-label="Thông báo website"
+            title="Xem thông báo"
+          >
+            <Bell className="size-5" aria-hidden />
+            {unreadNotifsCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 flex size-4 items-center justify-center rounded-full bg-accent-500 text-[9px] font-bold text-white ring-2 ring-white">
+                {unreadNotifsCount}
+              </span>
+            )}
+          </button>
+
           <Link to={user ? '/tai-khoan' : '/dang-nhap'} onClick={closeMenu} className={iconButtonClasses} aria-label={user ? 'Tài khoản của bạn' : 'Đăng nhập'} title={user ? `Tài khoản: ${user.fullName}` : 'Đăng nhập / Đăng ký'}>
             <User className="size-5" aria-hidden />
           </Link>
@@ -110,6 +144,14 @@ export default function Navbar() {
           </ul>
         </div>
       )}
+      {/* Global In-App Notifications Modal */}
+      <NotificationModal
+        isOpen={isNotifOpen}
+        onClose={() => setIsNotifOpen(false)}
+        notifications={notifications}
+        onMarkAsRead={handleMarkNotifRead}
+        onMarkAllAsRead={handleMarkAllNotifsRead}
+      />
     </header>
   )
 }

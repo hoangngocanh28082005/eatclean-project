@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { Utensils, CheckCircle, Clock, Info, Check } from 'lucide-react'
-import type { MealLogItem } from '../models/Workout'
+import type { MealLogItem } from '../models/Workout.ts'
 
 interface MealDiaryTrackerProps {
+  currentDate: string
+  onDateChange: (date: string) => void
   meals: MealLogItem[]
   onToggleMeal: (id: string) => void
 }
@@ -13,15 +16,88 @@ const mealTypeNames: Record<MealLogItem['mealType'], string> = {
   dinner: 'Bữa tối',
 }
 
-export default function MealDiaryTracker({ meals, onToggleMeal }: MealDiaryTrackerProps) {
+export default function MealDiaryTracker({
+  currentDate,
+  onDateChange,
+  meals,
+  onToggleMeal,
+}: MealDiaryTrackerProps) {
+  const [todayStr] = useState(() => new Date().toISOString().split('T')[0])
+
   const confirmedCount = meals.filter((m) => m.isConsumed).length
   const totalCaloriesPlanned = meals.reduce((acc, m) => acc + (m.calories || 0), 0)
   const consumedCalories = meals
     .filter((m) => m.isConsumed)
     .reduce((acc, m) => acc + (m.calories || 0), 0)
 
+  const isToday = currentDate === todayStr
+
+  // Quick helper to format date
+  const dateObj = new Date(currentDate + 'T00:00:00')
+  const dateFormatted = dateObj.toLocaleDateString('vi-VN', {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+
+  const setYesterday = () => {
+    const d = new Date()
+    d.setDate(d.getDate() - 1)
+    onDateChange(d.toISOString().split('T')[0])
+  }
+
+  const setToday = () => {
+    onDateChange(todayStr)
+  }
+
   return (
     <div className="space-y-6">
+      {/* Date Switcher Bar */}
+      <div className="flex flex-col gap-4 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-sage-200 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <span className="text-xs font-bold tracking-wider text-forest-700 uppercase">
+            Nhật ký theo ngày
+          </span>
+          <h3 className="text-lg font-bold text-forest-900 capitalize">
+            {isToday ? `Hôm nay (${dateFormatted})` : dateFormatted}
+          </h3>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={setToday}
+            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
+              isToday
+                ? 'bg-forest-800 text-white shadow-xs'
+                : 'bg-cream-100 text-forest-900/80 hover:bg-sage-100'
+            }`}
+          >
+            Hôm nay
+          </button>
+          <button
+            type="button"
+            onClick={setYesterday}
+            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
+              !isToday
+                ? 'bg-forest-800 text-white shadow-xs'
+                : 'bg-cream-100 text-forest-900/80 hover:bg-sage-100'
+            }`}
+          >
+            Hôm qua
+          </button>
+          <div className="relative inline-flex items-center">
+            <input
+              type="date"
+              value={currentDate}
+              onChange={(e) => onDateChange(e.target.value)}
+              className="rounded-xl border border-sage-200 bg-white px-3 py-1.5 text-xs font-medium text-forest-900 focus:outline-none focus:ring-1 focus:ring-forest-600"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Policy and Explanation Note */}
       <div className="flex items-start gap-3 rounded-2xl bg-amber-50/80 p-4 ring-1 ring-amber-200/60">
         <Info className="mt-0.5 size-5 shrink-0 text-amber-700" />
@@ -39,7 +115,7 @@ export default function MealDiaryTracker({ meals, onToggleMeal }: MealDiaryTrack
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-sage-200">
           <div className="flex items-center justify-between text-forest-700">
-            <span className="text-xs font-bold tracking-wider uppercase">Tiến độ ăn uống hôm nay</span>
+            <span className="text-xs font-bold tracking-wider uppercase">Tiến độ ăn uống trong ngày</span>
             <Utensils className="size-4.5 text-forest-600" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
@@ -67,18 +143,24 @@ export default function MealDiaryTracker({ meals, onToggleMeal }: MealDiaryTrack
           </div>
           <p className="mt-2 text-xs text-forest-900/60">
             {confirmedCount === meals.length
-              ? 'Tuyệt vời! Bạn đã hoàn thành 100% nhật ký ăn uống hôm nay.'
-              : 'Hãy đánh dấu ngay sau khi dùng xong mỗi bữa ăn nhé.'}
+              ? 'Tuyệt vời! Bạn đã hoàn thành 100% nhật ký ăn uống cho ngày này.'
+              : 'Hãy đánh dấu sau khi bạn đã dùng xong từng bữa ăn.'}
           </p>
         </div>
       </div>
 
       {/* Meal Items Checklist */}
       <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-sage-200">
-        <h3 className="text-lg font-bold text-forest-900">Danh sách bữa ăn hôm nay</h3>
-        <p className="text-xs text-forest-900/60">
-          Nhấn nút xác nhận để lưu lại thời điểm bạn đã nạp năng lượng
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-forest-900">
+              Danh sách bữa ăn {isToday ? 'hôm nay' : `ngày ${currentDate}`}
+            </h3>
+            <p className="text-xs text-forest-900/60">
+              Nhấn nút xác nhận để lưu lại thời điểm bạn đã nạp năng lượng
+            </p>
+          </div>
+        </div>
 
         <div className="mt-6 space-y-3">
           {meals.map((meal) => (
@@ -133,7 +215,7 @@ export default function MealDiaryTracker({ meals, onToggleMeal }: MealDiaryTrack
                 {meal.isConsumed ? (
                   <span className="inline-flex items-center gap-1 text-xs font-bold text-forest-800">
                     <CheckCircle className="size-4 text-forest-700" />
-                    Đã dùng lúc {meal.confirmedAt || 'vừa xong'}
+                    Đã dùng lúc {meal.confirmedAt || 'trong ngày'}
                   </span>
                 ) : (
                   <button

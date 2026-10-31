@@ -29,7 +29,8 @@ export default function WorkoutsPage() {
   const profile = useMemo(() => loadProfile(), [])
   const [workoutLogs, setWorkoutLogs] = useState(workoutProgressService.getWorkoutLogs())
   const [weightLogs, setWeightLogs] = useState(workoutProgressService.getWeightLogs())
-  const [mealLogs, setMealLogs] = useState(workoutProgressService.getMealLogs())
+  const [selectedMealDate, setSelectedMealDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [mealLogs, setMealLogs] = useState(() => workoutProgressService.getMealLogsForDate())
 
   // Completion toast feedback
   const [completionToast, setCompletionToast] = useState<string | null>(null)
@@ -128,9 +129,14 @@ export default function WorkoutsPage() {
     setWeightLogs(workoutProgressService.getWeightLogs())
   }
 
+  const handleMealDateChange = (date: string) => {
+    setSelectedMealDate(date)
+    setMealLogs(workoutProgressService.getMealLogsForDate(date))
+  }
+
   const handleToggleMeal = (id: string) => {
     workoutProgressService.toggleMealConsumed(id)
-    setMealLogs(workoutProgressService.getMealLogs())
+    setMealLogs(workoutProgressService.getMealLogsForDate(selectedMealDate))
   }
 
   const handleMarkNotifRead = (id: string) => {
@@ -320,7 +326,12 @@ export default function WorkoutsPage() {
 
         {/* TAB 3: MEAL DIARY */}
         {activeTab === 'meals' && (
-          <MealDiaryTracker meals={mealLogs} onToggleMeal={handleToggleMeal} />
+          <MealDiaryTracker
+            currentDate={selectedMealDate}
+            onDateChange={handleMealDateChange}
+            meals={mealLogs}
+            onToggleMeal={handleToggleMeal}
+          />
         )}
 
         {/* TAB 4: REMINDERS */}
