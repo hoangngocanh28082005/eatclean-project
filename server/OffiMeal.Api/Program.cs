@@ -19,6 +19,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<AddressService>();
 builder.Services.AddScoped<CatalogService>();
+builder.Services.AddScoped<WorkoutService>();
 
 var app = builder.Build();
 app.UseExceptionHandler();
