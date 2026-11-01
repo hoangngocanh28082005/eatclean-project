@@ -4,10 +4,12 @@ namespace OffiMeal.Api.Middleware;
 
 public sealed class AccountSecurityMiddleware(RequestDelegate next)
 {
+    private static readonly string[] ProtectedPaths = ["/api/auth", "/api/account", "/api/admin", "/api/meals", "/api/orders", "/api/subscriptions", "/api/payments"];
+
     public async Task InvokeAsync(HttpContext context, IAntiforgery antiforgery)
     {
         context.Response.Headers["Referrer-Policy"] = "no-referrer";
-        if (context.Request.Path.StartsWithSegments("/api/auth") || context.Request.Path.StartsWithSegments("/api/account") || context.Request.Path.StartsWithSegments("/api/admin"))
+        if (ProtectedPaths.Any(path => context.Request.Path.StartsWithSegments(path)))
         {
             context.Response.Headers.CacheControl = "no-cache, no-store";
             context.Response.Headers.Pragma = "no-cache";

@@ -19,7 +19,16 @@ npm run dev
 API local: `http://localhost:5050/api/health`, `/api/meals`, `/api/packages`.
 Vite chuyển tiếp `/api` đến backend, nên frontend gọi URL tương đối `/api/...`.
 
-Cấu hình Development sử dụng Windows Authentication tới `DESKTOP-V2J7BSI`, database `OffiMealDB`. Không cần mật khẩu sa. Trên máy khác, thay server và cấp quyền cho tài khoản Windows chạy backend. `TrustServerCertificate=True` chỉ dành cho môi trường phát triển local; production cần chứng chỉ hợp lệ và cấu hình kết nối riêng phía server.
+Sau khi có database, chạy thêm hai script (chạy lại được, không xóa dữ liệu):
+
+```powershell
+sqlcmd -S localhost -E -C -d OffiMealDB -b -f 65001 -i server/sql/001_accounts.sql
+sqlcmd -S localhost -E -C -d OffiMealDB -b -f 65001 -i server/sql/002_catalog_orders.sql
+```
+
+`002_catalog_orders.sql` thêm chỉ mục chống gửi lặp, đổi tên gói sang tiếng Việt và seed 6 món mẫu. Số carb/béo của món mẫu là ước lượng, cần bếp xác nhận trước khi mở bán.
+
+Cấu hình Development sử dụng Windows Authentication tới SQL Server trên `localhost`, database `OffiMealDB`. Không cần mật khẩu sa. Nếu dùng instance khác, thay server và cấp quyền cho tài khoản Windows chạy backend. `TrustServerCertificate=True` chỉ dành cho môi trường phát triển local; production cần chứng chỉ hợp lệ và cấu hình kết nối riêng phía server.
 
 ## Phạm vi hiện tại
 
@@ -27,7 +36,10 @@ Cấu hình Development sử dụng Windows Authentication tới `DESKTOP-V2J7BS
 - GET `/api/meals`: món đang bán, dữ liệu camelCase phù hợp frontend; không tự giả định có thông tin dị ứng đã xác minh.
 - GET `/api/packages`: gói đang hoạt động.
 - Đã có API và giao diện tài khoản, xác minh/khôi phục mật khẩu, địa chỉ và đọc đơn theo người đăng nhập. Xem [ACCOUNTS.md](ACCOUNTS.md) để chạy schema bổ sung, kiểm thử thư local và cấu hình SMTP. Trang dinh dưỡng vẫn dùng hồ sơ localStorage, chưa có API lưu thể trạng.
-- Database mới có thể trả `[]` ở `/api/meals` vì SQL nguồn chỉ seed gói và chế độ ăn, chưa seed món.
+- Database mới trả `[]` ở `/api/meals` cho đến khi chạy `002_catalog_orders.sql`.
+- POST `/api/subscriptions`: tạo gói `Pending` kèm khoản thanh toán `Pending`.
+- POST `/api/payments/{id}/confirm` (Admin): xác nhận thanh toán, chuyển gói sang `Active`.
+- POST `/api/orders`: đặt một lần giao trong gói `Active`, trừ `RemainingMeals`, không thu thêm tiền.
 
 ## Bước tiếp theo
 

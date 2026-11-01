@@ -13,3 +13,12 @@ export interface Meal {
   allergenInfoVerified?: boolean
   diet?: 'all' | 'vegetarian' | 'vegan'
 }
+
+/** Món đọc từ API, có đủ thông tin cho trang thực đơn. */
+export interface MenuMeal extends Meal {
+  mealType: string
+  carbs: number
+  fat: number
+  servingSize: string | null
+  goal: string | null
+}

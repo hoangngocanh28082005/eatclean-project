@@ -18,12 +18,12 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<AddressService>();
-builder.Services.AddScoped<CatalogService>();
 
 var app = builder.Build();
 app.UseExceptionHandler();
 app.UseMiddleware<BusinessExceptionMiddleware>();
 app.UseRouting();
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();

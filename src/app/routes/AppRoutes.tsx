@@ -2,7 +2,11 @@ import { Route, Routes } from 'react-router-dom'
 import MainLayout from '@/shared/components/layout/MainLayout'
 import HomePage from '@/features/home/views/HomePage'
 import MenuPage from '@/features/catalog/views/MenuPage'
+import MealDetailPage from '@/features/catalog/views/MealDetailPage'
 import PlansPage from '@/features/catalog/views/PlansPage'
+import CheckoutPage from '@/features/orders/views/CheckoutPage'
+import MyOrdersPage from '@/features/orders/views/MyOrdersPage'
+import OrderMealPage from '@/features/orders/views/OrderMealPage'
 import NutritionPage from '@/features/nutrition/views/NutritionPage'
 import WorkoutsPage from '@/features/workouts/views/WorkoutsPage'
 import AboutPage from '@/features/about/views/AboutPage'
@@ -24,7 +28,11 @@ export default function AppRoutes() {
         <Route path="/quan-tri" element={<AdminAccessPage />} />
         <Route index element={<HomePage />} />
         <Route path="/thuc-don" element={<MenuPage />} />
+        <Route path="/thuc-don/:id" element={<MealDetailPage />} />
         <Route path="/goi-an" element={<PlansPage />} />
+        <Route path="/dat-goi/:packageId" element={<CheckoutPage />} />
+        <Route path="/don-hang" element={<MyOrdersPage />} />
+        <Route path="/don-hang/dat-bua/:subscriptionId" element={<OrderMealPage />} />
         <Route path="/dinh-duong-ca-nhan" element={<NutritionPage />} />
         <Route path="/bai-tap" element={<WorkoutsPage />} />
         <Route path="/ve-chung-toi" element={<AboutPage />} />

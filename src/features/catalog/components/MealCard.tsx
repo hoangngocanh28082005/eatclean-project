@@ -5,11 +5,13 @@ import ImageWithFallback from '../../../shared/components/ui/ImageWithFallback'
 
 interface MealCardProps {
   meal: Meal
+  to?: string
+  linkLabel?: string
 }
 
 const formatPrice = (price: number) => `${price.toLocaleString('vi-VN')}đ`
 
-export default function MealCard({ meal }: MealCardProps) {
+export default function MealCard({ meal, to = '/thuc-don', linkLabel = 'Xem thực đơn' }: MealCardProps) {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-sage-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       <div className="relative aspect-[4/3] overflow-hidden">
@@ -47,10 +49,10 @@ export default function MealCard({ meal }: MealCardProps) {
             {formatPrice(meal.price)}
           </p>
           <Link
-            to="/thuc-don"
+            to={to}
             className="rounded-full border border-forest-700 px-4 py-2 text-sm font-semibold text-forest-700 transition-colors duration-200 hover:bg-forest-700 hover:text-white"
           >
-            Xem thực đơn
+            {linkLabel}
           </Link>
         </div>
       </div>

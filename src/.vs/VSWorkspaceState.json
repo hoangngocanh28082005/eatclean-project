@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\features",
+    "\\features\\admin",
+    "\\features\\admin\\models",
+    "\\features\\admin\\services",
+    "\\features\\admin\\views",
+    "\\features\\home",
+    "\\features\\home\\components",
+    "\\shared",
+    "\\shared\\services"
+  ],
+  "SelectedNode": "\\features\\home\\components\\Hero.tsx",
+  "PreviewInSolutionExplorer": false
+}

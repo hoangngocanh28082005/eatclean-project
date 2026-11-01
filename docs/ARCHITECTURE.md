@@ -26,7 +26,6 @@ server/
       AuthController.cs
       AccountController.cs
       AddressesController.cs
-      CatalogController.cs
       AdminController.cs
       SecurityController.cs
       HealthController.cs
@@ -34,7 +33,6 @@ server/
       AuthService.cs
       AccountService.cs
       AddressService.cs
-      CatalogService.cs
       PasswordService.cs
       TokenService.cs
       AccountMailer.cs
@@ -53,7 +51,8 @@ server/
 - `AuthController`/`AuthService`: đăng ký, đăng nhập, xác minh email, khôi phục mật khẩu. Controller quản lý sign-in/sign-out cookie; service không phụ thuộc HttpContext.
 - `AccountController`/`AccountService`: đọc/sửa thông tin, đổi mật khẩu, đọc đơn của người đang đăng nhập.
 - `AddressesController`/`AddressService`: quản lý địa chỉ theo chủ sở hữu; giữ transaction cập nhật địa chỉ mặc định, bảo vệ địa chỉ đã tham chiếu bởi đơn hàng.
-- `CatalogController`/`CatalogService`: đọc món và gói từ database.
+- `MealsController`, `PackagesController`: đọc món và gói từ database.
+- `SubscriptionsController`, `PaymentsController`, `OrdersController`: đăng ký gói, xác nhận thanh toán, đặt từng lần giao trong gói.
 - `SecurityController`: cấp token CSRF và thông tin chế độ thư local, tách khỏi nhóm hạn mức đăng nhập.
 - `TokenService`: phát hành, hết hạn và tiêu thụ mã dùng một lần. `PasswordService`: băm/kiểm tra mật khẩu. `AccountMailer`: gửi thư SMTP hoặc lưu thư development.
 - `Models/Entities`: một lớp mỗi bảng đang được dùng, giữ nguyên tên bảng trong DbContext. Entity tài khoản không được trả trực tiếp ra API.

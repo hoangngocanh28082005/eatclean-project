@@ -1163,23 +1163,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Admin\\.nuget\\packages\\": {},
+    "C:\\Users\\admin\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Admin\\Downloads\\EatClean\\officemeal\\server\\OffiMeal.Api\\OffiMeal.Api.csproj",
+      "projectUniqueName": "C:\\Users\\admin\\Documents\\golang\\eatclean-project\\server\\OffiMeal.Api\\OffiMeal.Api.csproj",
       "projectName": "OffiMeal.Api",
-      "projectPath": "C:\\Users\\Admin\\Downloads\\EatClean\\officemeal\\server\\OffiMeal.Api\\OffiMeal.Api.csproj",
-      "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Admin\\Downloads\\EatClean\\officemeal\\server\\OffiMeal.Api\\obj\\",
+      "projectPath": "C:\\Users\\admin\\Documents\\golang\\eatclean-project\\server\\OffiMeal.Api\\OffiMeal.Api.csproj",
+      "packagesPath": "C:\\Users\\admin\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\admin\\Documents\\golang\\eatclean-project\\server\\OffiMeal.Api\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],

@@ -13,7 +13,7 @@ export default function SubscriptionPlans() {
         <SectionHeading
           eyebrow="Gói ăn"
           title="Gói ăn phù hợp với lịch trình của bạn"
-          description="Tham khảo gói tuần và gói tháng. Chức năng đăng ký cùng chính sách giao, đổi và tạm dừng gói đang được hoàn thiện."
+          description="Tham khảo gói tuần và gói tháng. Chính sách giao, đổi và tạm dừng gói đang được hoàn thiện."
         />
 
         <div className="mx-auto mt-12 grid max-w-4xl gap-6 sm:grid-cols-2">

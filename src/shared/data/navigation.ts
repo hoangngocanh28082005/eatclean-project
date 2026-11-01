@@ -7,6 +7,7 @@ export const navLinks: NavLink[] = [
   { label: 'Trang chủ', to: '/' },
   { label: 'Thực đơn', to: '/thuc-don' },
   { label: 'Gói ăn', to: '/goi-an' },
+  { label: 'Đơn hàng', to: '/don-hang' },
   { label: 'Dinh dưỡng cá nhân', to: '/dinh-duong-ca-nhan' },
   { label: 'Bài tập', to: '/bai-tap' },
   { label: 'Về chúng tôi', to: '/ve-chung-toi' },
