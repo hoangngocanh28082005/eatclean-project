@@ -3,6 +3,7 @@ dist/
 dist-ssr/
 **/bin/
 **/obj/
+**/.vs/
 **/App_Data/
 **/appsettings.Local.json
 *.local
