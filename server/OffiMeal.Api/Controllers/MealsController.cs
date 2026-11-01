@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using OffiMeal.Api.Data;
 using OffiMeal.Api.Models.Entities;
@@ -106,6 +107,100 @@ public class MealsController : ControllerBase
         }
 
         return Ok(meal);
+    }
+
+    // GET: api/meals/daily/2026-11-03
+    // Thuc don cua mot ngay giao, chi gom cac mon dang ban
+    [HttpGet("daily/{date:datetime}")]
+    public async Task<IActionResult> GetDailyMenu(DateTime date)
+    {
+        var menuDate = date.Date;
+
+        var meals = await _context.Meals
+            .AsNoTracking()
+            .Where(m =>
+                m.IsAvailable &&
+                _context.DailyMenus.Any(d =>
+                    d.MenuDate == menuDate &&
+                    d.MealId == m.MealId))
+            .OrderBy(m => m.MealId)
+            .Select(m => new MealResponse(
+                m.MealId.ToString(),
+                m.Name,
+                m.Description ?? "",
+                m.Calories,
+                m.ProteinG,
+                m.CarbsG,
+                m.FatG,
+                m.Price,
+                m.ImageUrl ?? "",
+                m.Name,
+                m.MealType,
+                false,
+                m.ServingSize,
+                m.Allergens,
+                m.Goal
+            ))
+            .ToListAsync();
+
+        return Ok(meals);
+    }
+
+    // PUT: api/meals/daily/2026-11-03
+    // Admin xep thuc don cho mot ngay, danh sach rong la xoa thuc don ngay do
+    [HttpPut("daily/{date:datetime}")]
+    [Authorize(Policy = AccountSession.AdminPolicy)]
+    public async Task<IActionResult> UpdateDailyMenu(
+        DateTime date,
+        UpdateDailyMenuRequest request)
+    {
+        var menuDate = date.Date;
+
+        if (menuDate < DateTime.Today)
+        {
+            return BadRequest(new { message = "Không thể sửa thực đơn của ngày đã qua." });
+        }
+
+        var mealIds = request.MealIds.Distinct().ToList();
+
+        int availableCount = await _context.Meals
+            .CountAsync(m => mealIds.Contains(m.MealId) && m.IsAvailable);
+
+        if (availableCount != mealIds.Count)
+        {
+            return BadRequest(new
+            {
+                message = "Có món đã ngừng bán hoặc không tồn tại."
+            });
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        await _context.DailyMenus
+            .Where(d => d.MenuDate == menuDate)
+            .ExecuteDeleteAsync();
+
+        _context.DailyMenus.AddRange(mealIds.Select(mealId => new DailyMenu
+        {
+            MenuDate = menuDate,
+            MealId = mealId
+        }));
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
+        {
+            return Conflict(new
+            {
+                message = "Thực đơn ngày này vừa được cập nhật. Vui lòng tải lại và thử lại."
+            });
+        }
+
+        await transaction.CommitAsync();
+
+        return Ok(new { message = "Đã lưu thực đơn." });
     }
 
     // GET: api/meals/manage

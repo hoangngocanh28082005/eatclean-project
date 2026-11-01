@@ -50,11 +50,13 @@ async function signIn(email, role) {
   return request
 }
 
+let restoreMenus = async () => {}
+
 try {
   const anonymous = client()
   const meals = await expect(anonymous, '/api/meals', 'GET', undefined, 200)
   const packages = await expect(anonymous, '/api/packages', 'GET', undefined, 200)
-  assert.ok(meals.length > 0, 'Run server/sql/002_catalog_orders.sql first')
+  assert.ok(meals.length > 1, 'Run server/sql/002_catalog_orders.sql first')
   assert.deepEqual(packages.map(item => [item.mealCount, item.price]), [[5, 350000], [20, 1300000]])
   await expect(anonymous, `/api/meals/${meals[0].id}`, 'GET', undefined, 200)
   await expect(anonymous, '/api/orders', 'GET', undefined, 401)
@@ -74,6 +76,18 @@ try {
 
   const order = { subscriptionId: created.subscriptionId, addressId: address.addressId, deliveryDate: dayFromNow(1), note: 'Test', items: [{ mealId: Number(meals[0].id), quantity: 1 }] }
 
+  // Thuc don theo ngay: chi admin duoc xep, khong sua ngay da qua, chi nhan mon dang ban
+  const menuDates = [dayFromNow(1), dayFromNow(2)]
+  const savedMenus = await Promise.all(menuDates.map(async date => (await expect(anonymous, `/api/meals/daily/${date}`, 'GET', undefined, 200)).map(meal => Number(meal.id))))
+  restoreMenus = () => Promise.all(menuDates.map((date, index) => expect(admin, `/api/meals/daily/${date}`, 'PUT', { mealIds: savedMenus[index] }, 200)))
+  const firstMealOnly = { mealIds: [Number(meals[0].id), Number(meals[0].id)] }
+  await expect(a, `/api/meals/daily/${menuDates[0]}`, 'PUT', firstMealOnly, 403)
+  await expect(admin, `/api/meals/daily/${dayFromNow(-1)}`, 'PUT', firstMealOnly, 400)
+  await expect(admin, `/api/meals/daily/${menuDates[0]}`, 'PUT', { mealIds: [0] }, 400)
+  await expect(admin, `/api/meals/daily/${menuDates[0]}`, 'PUT', { mealIds: [] }, 200)
+  await expect(admin, `/api/meals/daily/${menuDates[1]}`, 'PUT', { mealIds: [] }, 200)
+  assert.deepEqual(await expect(anonymous, `/api/meals/daily/${menuDates[0]}`, 'GET', undefined, 200), [])
+
   // Chua thanh toan thi chua dat bua; khach khong tu xac nhan duoc
   await expect(a, '/api/orders', 'POST', order, 400)
   await expect(a, `/api/payments/${created.paymentId}/confirm`, 'POST', {}, 403)
@@ -92,6 +106,11 @@ try {
   // Dat bua: tru so bua, khong thu them tien, moi ngay mot don, trong thoi han goi
   await expect(a, '/api/orders', 'POST', { ...order, deliveryDate: dayFromNow(0) }, 400)
   await expect(a, '/api/orders', 'POST', { ...order, deliveryDate: dayFromNow(30) }, 400)
+  await expect(a, '/api/orders', 'POST', order, 400)
+  await expect(admin, `/api/meals/daily/${menuDates[0]}`, 'PUT', firstMealOnly, 200)
+  await expect(admin, `/api/meals/daily/${menuDates[1]}`, 'PUT', firstMealOnly, 200)
+  assert.deepEqual((await expect(anonymous, `/api/meals/daily/${menuDates[0]}`, 'GET', undefined, 200)).map(meal => meal.id), [meals[0].id])
+  await expect(a, '/api/orders', 'POST', { ...order, items: [{ mealId: Number(meals[1].id), quantity: 1 }] }, 400)
   await expect(a, '/api/orders', 'POST', { ...order, deliveryDate: dayFromNow(2), items: [{ mealId: Number(meals[0].id), quantity: 6 }] }, 400)
   assert.equal((await expect(a, '/api/orders', 'POST', order, 200)).remainingMeals, 4)
   await expect(a, '/api/orders', 'POST', order, 409)
@@ -138,5 +157,6 @@ try {
   await expect(b, '/api/orders', 'POST', { ...order, deliveryDate: dayFromNow(2) }, 400)
   console.log('Orders integration passed.')
 } finally {
+  await restoreMenus()
   sql(`BEGIN TRANSACTION; DELETE FROM dbo.Payments WHERE UserId IN (${scoped}); DELETE FROM dbo.OrderDetails WHERE OrderId IN (SELECT OrderId FROM dbo.Orders WHERE UserId IN (${scoped})); DELETE FROM dbo.Orders WHERE UserId IN (${scoped}); DELETE FROM dbo.Subscriptions WHERE UserId IN (${scoped}); DELETE FROM dbo.DeliveryAddresses WHERE UserId IN (${scoped}); DELETE FROM dbo.AccountTokens WHERE UserId IN (${scoped}); DELETE FROM dbo.Users WHERE Email IN (${emails.map(quote).join(',')}); COMMIT;`)
 }

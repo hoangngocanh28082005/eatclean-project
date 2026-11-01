@@ -19,11 +19,12 @@ npm run dev
 API local: `http://localhost:5050/api/health`, `/api/meals`, `/api/packages`.
 Vite chuyển tiếp `/api` đến backend, nên frontend gọi URL tương đối `/api/...`.
 
-Sau khi có database, chạy thêm hai script (chạy lại được, không xóa dữ liệu):
+Sau khi có database, chạy thêm các script (chạy lại được, không xóa dữ liệu):
 
 ```powershell
 sqlcmd -S localhost -E -C -d OffiMealDB -b -f 65001 -i server/sql/001_accounts.sql
 sqlcmd -S localhost -E -C -d OffiMealDB -b -f 65001 -i server/sql/002_catalog_orders.sql
+sqlcmd -S localhost -E -C -d OffiMealDB -b -f 65001 -i server/sql/003_daily_menus.sql
 ```
 
 `002_catalog_orders.sql` thêm chỉ mục chống gửi lặp, đổi tên gói sang tiếng Việt và seed 6 món mẫu. Số carb/béo của món mẫu là ước lượng, cần bếp xác nhận trước khi mở bán.
@@ -41,7 +42,9 @@ Cấu hình Development sử dụng Windows Authentication tới SQL Server trê
 - GET `/api/payments/pending` (Admin): các khoản đang chờ đối soát, kèm thông tin khách. Giao diện ở `/quan-tri`.
 - POST `/api/payments/{id}/confirm` (Admin): xác nhận thanh toán, chuyển gói sang `Active`.
 - Thông tin tài khoản nhận tiền và mã VietQR hiện ở trang Đơn hàng lấy từ `src/features/orders/data/bankAccount.ts`.
-- POST `/api/orders`: đặt một lần giao trong gói `Active`, trừ `RemainingMeals`, không thu thêm tiền.
+- GET `/api/meals/daily/{yyyy-MM-dd}`: thực đơn của một ngày giao, chỉ gồm món đang bán.
+- PUT `/api/meals/daily/{yyyy-MM-dd}` (Admin): thay toàn bộ thực đơn của ngày đó bằng `mealIds`, danh sách rỗng là xóa thực đơn. Giao diện ở `/quan-tri`.
+- POST `/api/orders`: đặt một lần giao trong gói `Active`, trừ `RemainingMeals`, không thu thêm tiền. Món phải nằm trong thực đơn của ngày giao, nên ngày chưa xếp thực đơn thì chưa đặt được.
 - GET `/api/orders/manage` (Admin): đơn của mọi khách, kèm địa chỉ giao. Giao diện ở `/quan-tri`.
 - PATCH `/api/orders/{id}/status` (Admin): chuyển đơn từng bước `Pending → Confirmed → Delivering → Delivered`. Chỉ đánh dấu `Delivered` được từ ngày giao.
 - POST `/api/orders/{id}/received`: khách xác nhận đã nhận đơn đang giao của chính mình, chuyển sang `Delivered`.

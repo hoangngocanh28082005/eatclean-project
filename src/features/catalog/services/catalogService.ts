@@ -14,6 +14,7 @@ const toMenuMeal = ({ allergens, ...meal }: MealDto): MenuMeal => ({
 export const catalogService = {
   meals: async () => (await api<MealDto[]>('/api/meals')).map(toMenuMeal),
   meal: async (id: string) => toMenuMeal(await api<MealDto>(`/api/meals/${id}`)),
+  dailyMenu: async (date: string) => (await api<MealDto[]>(`/api/meals/daily/${date}`)).map(toMenuMeal),
   packages: () => api<MealPackage[]>('/api/packages'),
   packageById: (id: string) => api<MealPackage>(`/api/packages/${id}`),
 }

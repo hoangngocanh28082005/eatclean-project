@@ -2,6 +2,10 @@
 
 namespace OffiMeal.Api.Models.Requests;
 
+public record UpdateDailyMenuRequest(
+    List<int> MealIds
+);
+
 public sealed class MealRequest
 {
     [Required]

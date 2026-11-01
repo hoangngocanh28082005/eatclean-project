@@ -20,6 +20,8 @@ public sealed class OffiMealDbContext(
 
     public DbSet<MealPlanDetail> MealPlanDetails => Set<MealPlanDetail>();
 
+    public DbSet<DailyMenu> DailyMenus => Set<DailyMenu>();
+
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
 
     public DbSet<Order> Orders => Set<Order>();
@@ -112,6 +114,21 @@ public sealed class OffiMealDbContext(
                 x.DayNumber,
                 x.MealId
             });
+        });
+
+        // DAILY MENUS
+        modelBuilder.Entity<DailyMenu>(entity =>
+        {
+            entity.ToTable("DailyMenus", "dbo");
+
+            entity.HasKey(x => new
+            {
+                x.MenuDate,
+                x.MealId
+            });
+
+            entity.Property(x => x.MenuDate)
+                .HasColumnType("date");
         });
 
         // SUBSCRIPTIONS

@@ -12,7 +12,6 @@ import { orderService, toDateInput } from '../services/orderService'
 
 interface FormData {
   subscription: Subscription
-  meals: MenuMeal[]
   addresses: Address[]
 }
 
@@ -23,6 +22,7 @@ export default function OrderMealPage() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [deliveryDate, setDeliveryDate] = useState('')
+  const [menu, setMenu] = useState<{ date: string; meals: MenuMeal[] } | null>(null)
   const [mealId, setMealId] = useState('')
   const [addressId, setAddressId] = useState('')
   const [note, setNote] = useState('')
@@ -34,16 +34,31 @@ export default function OrderMealPage() {
 
   useEffect(() => {
     let active = true
-    Promise.all([orderService.subscription(subscriptionId), catalogService.meals(), accountService.addresses()])
-      .then(([subscription, meals, addresses]) => {
+    Promise.all([orderService.subscription(subscriptionId), accountService.addresses()])
+      .then(([subscription, addresses]) => {
         if (!active) return
-        setData({ subscription, meals, addresses })
-        setMealId(meals[0]?.id ?? '')
+        setData({ subscription, addresses })
         setAddressId(String(addresses[0]?.addressId ?? ''))
       })
       .catch((e: unknown) => { if (active) setError(errorMessage(e)) })
     return () => { active = false }
   }, [subscriptionId])
+
+  useEffect(() => {
+    if (!deliveryDate) return
+    let active = true
+    catalogService.dailyMenu(deliveryDate)
+      .then((meals) => {
+        if (!active) return
+        setMenu({ date: deliveryDate, meals })
+        setMealId(meals[0]?.id ?? '')
+        setError('')
+      })
+      .catch((e: unknown) => { if (active) setError(errorMessage(e)) })
+    return () => { active = false }
+  }, [deliveryDate])
+
+  const meals = menu?.date === deliveryDate ? menu.meals : null
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -92,14 +107,22 @@ export default function OrderMealPage() {
               onChange={(event) => setDeliveryDate(event.target.value)}
               required
             />
-            <label className="block text-sm font-semibold text-forest-900">
-              <span className="mb-2 block">Món</span>
-              <select value={mealId} onChange={(event) => setMealId(event.target.value)} className={fieldClass} required>
-                {data.meals.map((meal) => (
-                  <option key={meal.id} value={meal.id}>{meal.name} · {meal.calories} kcal</option>
-                ))}
-              </select>
-            </label>
+            {!deliveryDate ? (
+              <p className="text-sm text-forest-900/70">Chọn ngày giao để xem thực đơn của ngày đó.</p>
+            ) : !meals ? (
+              !error && <p role="status">Đang tải thực đơn…</p>
+            ) : meals.length ? (
+              <label className="block text-sm font-semibold text-forest-900">
+                <span className="mb-2 block">Món</span>
+                <select value={mealId} onChange={(event) => setMealId(event.target.value)} className={fieldClass} required>
+                  {meals.map((meal) => (
+                    <option key={meal.id} value={meal.id}>{meal.name} · {meal.calories} kcal</option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <p className="text-sm text-forest-900/70">Ngày này chưa có thực đơn. Vui lòng chọn ngày khác.</p>
+            )}
             <label className="block text-sm font-semibold text-forest-900">
               <span className="mb-2 block">Địa chỉ giao</span>
               <select value={addressId} onChange={(event) => setAddressId(event.target.value)} className={fieldClass} required>
@@ -111,7 +134,7 @@ export default function OrderMealPage() {
               </select>
             </label>
             <AccountField name="note" label="Ghi chú" maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} />
-            <Button type="submit" disabled={busy} className="w-full">{busy ? 'Đang đặt…' : 'Đặt bữa'}</Button>
+            <Button type="submit" disabled={busy || !meals?.length} className="w-full">{busy ? 'Đang đặt…' : 'Đặt bữa'}</Button>
           </form>
         )}
       </div>

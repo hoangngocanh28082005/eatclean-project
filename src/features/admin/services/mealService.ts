@@ -26,6 +26,13 @@ export const mealService = {
             method: 'PATCH',
         }),
 
+    // Xep thuc don cho mot ngay
+    updateDailyMenu: (date: string, mealIds: number[]) =>
+        api<{ message: string }>(`/api/meals/daily/${date}`, {
+            method: 'PUT',
+            body: JSON.stringify({ mealIds }),
+        }),
+
     // Xoa mem mon an
     delete: (id: number) =>
         api(`/api/meals/${id}`, {

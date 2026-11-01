@@ -113,6 +113,18 @@ public class OrdersController : ControllerBase
             });
         }
 
+        // Moi ngay giao chi phuc vu cac mon da xep trong thuc don ngay do
+        int onMenuCount = await _context.DailyMenus
+            .CountAsync(d => d.MenuDate == deliveryDate && mealIds.Contains(d.MealId));
+
+        if (onMenuCount != mealIds.Count)
+        {
+            return BadRequest(new
+            {
+                message = "Có món không nằm trong thực đơn của ngày giao."
+            });
+        }
+
         int mealsUsed = items.Sum(i => i.Quantity);
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
