@@ -9,10 +9,10 @@ public sealed class Meal
 
     public string MealType { get; set; } = "";
 
-    public decimal Calories { get; set; }
-    public decimal ProteinG { get; set; }
-    public decimal CarbsG { get; set; }
-    public decimal FatG { get; set; }
+    public decimal? Calories { get; set; }
+    public decimal? ProteinG { get; set; }
+    public decimal? CarbsG { get; set; }
+    public decimal? FatG { get; set; }
 
     public decimal Price { get; set; }
 

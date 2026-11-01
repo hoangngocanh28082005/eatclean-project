@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Flame, Drumstick } from 'lucide-react'
+import { formatNutrition } from '@/features/catalog/data/labels'
 import type { Meal } from '@/features/catalog/models/Meal'
 import ImageWithFallback from '../../../shared/components/ui/ImageWithFallback'
 
@@ -36,11 +37,11 @@ export default function MealCard({ meal, to = '/thuc-don', linkLabel = 'Xem th�
         <div className="flex items-center gap-4 text-sm text-forest-900/80">
           <span className="flex items-center gap-1.5">
             <Flame className="size-4 text-accent-600" aria-hidden />
-            {meal.calories} kcal
+            {formatNutrition(meal.calories, 'kcal')}
           </span>
           <span className="flex items-center gap-1.5">
             <Drumstick className="size-4 text-forest-500" aria-hidden />
-            {meal.protein} g đạm
+            {formatNutrition(meal.protein, 'g đạm')}
           </span>
         </div>
 

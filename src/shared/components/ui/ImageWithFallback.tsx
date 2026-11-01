@@ -15,7 +15,7 @@ export default function ImageWithFallback({
   className = '',
   ...rest
 }: ImageWithFallbackProps) {
-  const [currentSrc, setCurrentSrc] = useState(src)
+  const [currentSrc, setCurrentSrc] = useState(src || fallbackSrc)
 
   return (
     <img

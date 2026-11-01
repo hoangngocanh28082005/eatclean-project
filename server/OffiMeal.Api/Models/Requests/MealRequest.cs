@@ -20,16 +20,16 @@ public sealed class MealRequest
     public string MealType { get; set; } = "";
 
     [Range(0, 10000)]
-    public decimal Calories { get; set; }
+    public decimal? Calories { get; set; }
 
     [Range(0, 1000)]
-    public decimal ProteinG { get; set; }
+    public decimal? ProteinG { get; set; }
 
     [Range(0, 1000)]
-    public decimal CarbsG { get; set; }
+    public decimal? CarbsG { get; set; }
 
     [Range(0, 1000)]
-    public decimal FatG { get; set; }
+    public decimal? FatG { get; set; }
 
     [Range(0, 100000000)]
     public decimal Price { get; set; }
@@ -43,7 +43,7 @@ public sealed class MealRequest
     [StringLength(500)]
     public string? Allergens { get; set; }
 
-    [RegularExpression("EatClean|Keto|LowCarb|Balanced")]
+    [RegularExpression("EatClean|Keto|LowCarb|Balanced|Vegetarian")]
     public string? Goal { get; set; }
 
     public bool IsAvailable { get; set; } = true;

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { AdminMeal, MealRequest } from '../models/AdminMeal'
 import { mealService } from '../services/mealService'
 import { errorMessage } from '@/shared/services/httpClient'
+import { formatNutrition } from '@/features/catalog/data/labels'
 
 const emptyForm: MealRequest = {
     name: '',
@@ -87,7 +88,7 @@ export default function MenuManagement() {
 
         setForm(previous => ({
             ...previous,
-            [name]: type === 'number' ? Number(value) : value,
+            [name]: type !== 'number' ? value : value === '' ? null : Number(value),
         }))
     }
 
@@ -241,7 +242,7 @@ export default function MenuManagement() {
             < td className = "px-5 py-4" > { meal.mealType } </td>
 
                 < td className = "px-5 py-4" >
-                { meal.calories } kcal
+                { formatNutrition(meal.calories, 'kcal') }
                     </td>
 
                     < td className = "px-5 py-4 font-medium" >
@@ -387,6 +388,7 @@ className = "w-full rounded-lg border px-3 py-2"
         < option value = "Keto" > Keto </option>
             < option value = "LowCarb" > LowCarb </option>
                 < option value = "Balanced" > Balanced </option>
+                < option value = "Vegetarian" > Vegetarian </option>
                     </select>
                     </div>
 
@@ -398,7 +400,7 @@ className = "w-full rounded-lg border px-3 py-2"
 type = "number"
 min = "0"
 name = "calories"
-value = { form.calories }
+value = { form.calories ?? '' }
 onChange = { handleChange }
 className = "w-full rounded-lg border px-3 py-2"
     />
@@ -412,7 +414,7 @@ className = "w-full rounded-lg border px-3 py-2"
 type = "number"
 min = "0"
 name = "proteinG"
-value = { form.proteinG }
+value = { form.proteinG ?? '' }
 onChange = { handleChange }
 className = "w-full rounded-lg border px-3 py-2"
     />
@@ -426,7 +428,7 @@ className = "w-full rounded-lg border px-3 py-2"
 type = "number"
 min = "0"
 name = "carbsG"
-value = { form.carbsG }
+value = { form.carbsG ?? '' }
 onChange = { handleChange }
 className = "w-full rounded-lg border px-3 py-2"
     />
@@ -440,7 +442,7 @@ className = "w-full rounded-lg border px-3 py-2"
 type = "number"
 min = "0"
 name = "fatG"
-value = { form.fatG }
+value = { form.fatG ?? '' }
 onChange = { handleChange }
 className = "w-full rounded-lg border px-3 py-2"
     />

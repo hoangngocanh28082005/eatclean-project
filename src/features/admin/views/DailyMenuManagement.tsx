@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { formatNutrition } from '@/features/catalog/data/labels'
 import { catalogService } from '@/features/catalog/services/catalogService'
 import { toDateInput } from '@/features/orders/services/orderService'
 import { AccountField, Feedback, panelClass } from '@/shared/components/forms/AccountFields'
@@ -80,7 +81,7 @@ export default function DailyMenuManagement() {
             {meals.map((meal) => (
               <label key={meal.mealId} className="flex items-center gap-3 rounded-xl bg-cream-100 p-3 text-sm">
                 <input type="checkbox" checked={selected.includes(meal.mealId)} onChange={() => toggle(meal.mealId)} />
-                <span>{meal.name} · {meal.calories} kcal</span>
+                <span>{meal.name} · {formatNutrition(meal.calories, 'kcal')}</span>
               </label>
             ))}
           </fieldset>

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import type { Address } from '@/features/accounts/models/Account'
 import { accountService } from '@/features/accounts/services/accountService'
+import { formatNutrition } from '@/features/catalog/data/labels'
 import type { MenuMeal } from '@/features/catalog/models/Meal'
 import { catalogService } from '@/features/catalog/services/catalogService'
 import { AccountField, Feedback, fieldClass, panelClass } from '@/shared/components/forms/AccountFields'
@@ -116,7 +117,7 @@ export default function OrderMealPage() {
                 <span className="mb-2 block">Món</span>
                 <select value={mealId} onChange={(event) => setMealId(event.target.value)} className={fieldClass} required>
                   {meals.map((meal) => (
-                    <option key={meal.id} value={meal.id}>{meal.name} · {meal.calories} kcal</option>
+                    <option key={meal.id} value={meal.id}>{meal.name} · {formatNutrition(meal.calories, 'kcal')}</option>
                   ))}
                 </select>
               </label>

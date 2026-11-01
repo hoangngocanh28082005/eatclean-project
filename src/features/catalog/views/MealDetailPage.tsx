@@ -4,7 +4,7 @@ import { Feedback, panelClass } from '@/shared/components/forms/AccountFields'
 import Button from '@/shared/components/ui/Button'
 import ImageWithFallback from '@/shared/components/ui/ImageWithFallback'
 import { errorMessage } from '@/shared/services/httpClient'
-import { formatPrice, goalLabels, mealTypeLabels } from '../data/labels'
+import { formatNutrition, formatPrice, goalLabels, mealTypeLabels } from '../data/labels'
 import type { MenuMeal } from '../models/Meal'
 import { catalogService } from '../services/catalogService'
 
@@ -22,10 +22,10 @@ export default function MealDetailPage() {
   }, [id])
 
   const nutrition = meal && [
-    ['Năng lượng', `${meal.calories} kcal`],
-    ['Đạm', `${meal.protein} g`],
-    ['Tinh bột', `${meal.carbs} g`],
-    ['Chất béo', `${meal.fat} g`],
+    ['Năng lượng', formatNutrition(meal.calories, 'kcal')],
+    ['Đạm', formatNutrition(meal.protein, 'g')],
+    ['Tinh bột', formatNutrition(meal.carbs, 'g')],
+    ['Chất béo', formatNutrition(meal.fat, 'g')],
   ]
 
   return (

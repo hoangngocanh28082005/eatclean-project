@@ -24,7 +24,9 @@ Sau khi có database, chạy thêm các script (chạy lại được, không x�
 ```powershell
 sqlcmd -S localhost -E -C -d OffiMealDB -b -f 65001 -i server/sql/001_accounts.sql
 sqlcmd -S localhost -E -C -d OffiMealDB -b -f 65001 -i server/sql/002_catalog_orders.sql
-sqlcmd -S localhost -E -C -d OffiMealDB -b -f 65001 -i server/sql/003_daily_menus.sql
+sqlcmd -S localhost -E -C -d OffiMealDB -b -f 65001 -i server/sql/003_catalog_compatibility.sql
+sqlcmd -S localhost -E -C -d OffiMealDB -b -f 65001 -i server/sql/004_team_catalog.sql
+sqlcmd -S localhost -E -C -d OffiMealDB -b -f 65001 -i server/sql/005_daily_menus.sql
 ```
 
 `002_catalog_orders.sql` thêm chỉ mục chống gửi lặp, đổi tên gói sang tiếng Việt và seed 6 món mẫu. Số carb/béo của món mẫu là ước lượng, cần bếp xác nhận trước khi mở bán.

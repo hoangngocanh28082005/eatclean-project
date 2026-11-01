@@ -3,10 +3,10 @@ export interface AdminMeal {
     name: string
     description: string | null
     mealType: string
-    calories: number
-    proteinG: number
-    carbsG: number
-    fatG: number
+    calories: number | null
+    proteinG: number | null
+    carbsG: number | null
+    fatG: number | null
     price: number
     imageUrl: string | null
     isAvailable: boolean
@@ -19,10 +19,10 @@ export interface MealRequest {
     name: string
     description: string
     mealType: string
-    calories: number
-    proteinG: number
-    carbsG: number
-    fatG: number
+    calories: number | null
+    proteinG: number | null
+    carbsG: number | null
+    fatG: number | null
     price: number
     imageUrl: string
     servingSize: string

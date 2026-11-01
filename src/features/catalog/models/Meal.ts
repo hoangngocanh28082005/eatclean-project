@@ -2,8 +2,8 @@ export interface Meal {
   id: string
   name: string
   description: string
-  calories: number
-  protein: number
+  calories: number | null
+  protein: number | null
   price: number
   imageUrl: string
   imageAlt: string
@@ -17,8 +17,8 @@ export interface Meal {
 /** Món đọc từ API, có đủ thông tin cho trang thực đơn. */
 export interface MenuMeal extends Meal {
   mealType: string
-  carbs: number
-  fat: number
+  carbs: number | null
+  fat: number | null
   servingSize: string | null
   goal: string | null
 }

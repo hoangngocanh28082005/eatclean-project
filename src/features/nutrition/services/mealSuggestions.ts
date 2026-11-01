@@ -20,7 +20,10 @@ export function suggestMeals(catalog: Meal[], profile: BodyProfile, dailyKcal: n
     if (profile.diet === 'vegetarian' && !['vegetarian', 'vegan'].includes(meal.diet ?? '')) return false
     return true
   }).flatMap(meal => {
-    const portions = [0.75, 1, 1.25].map(portion => ({ portion, kcal: Math.round(meal.calories * portion) }))
+    // Chua du so lieu dinh duong thi khong tinh khau phan duoc
+    const { calories, protein } = meal
+    if (calories === null || protein === null) return []
+    const portions = [0.75, 1, 1.25].map(portion => ({ portion, kcal: Math.round(calories * portion) }))
       .filter(option => option.kcal <= budget)
       .sort((a, b) => Math.abs(a.kcal - budget) - Math.abs(b.kcal - budget))
     const best = portions[0]
@@ -31,7 +34,7 @@ export function suggestMeals(catalog: Meal[], profile: BodyProfile, dailyKcal: n
     const preferred = favorites.some(term => text.includes(term))
     const goalMatch = meal.tag === (profile.goal === 'lose' ? 'Giảm cân' : profile.goal === 'gain' ? 'Tăng cơ' : '')
     const score = Math.abs(best.kcal - budget) / budget - (preferred ? 0.12 : 0) - (goalMatch ? 0.08 : 0)
-    return [{ meal, ...best, score, preferred, matchedFavorites, goalMatch, protein: Math.round(meal.protein * best.portion) }]
+    return [{ meal, ...best, score, preferred, matchedFavorites, goalMatch, protein: Math.round(protein * best.portion) }]
   }).sort((a, b) => a.score - b.score || a.meal.id.localeCompare(b.meal.id)).slice(0, 3)
   return { budget, suggestions }
 }

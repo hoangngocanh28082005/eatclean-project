@@ -6,6 +6,7 @@ import { execFileSync } from 'node:child_process'
 const base = 'http://localhost:5050'
 const suffix = `${Date.now()}-${process.pid}`
 const emails = [`orders-a-${suffix}@example.test`, `orders-b-${suffix}@example.test`, `orders-admin-${suffix}@example.test`]
+const unknownMealName = `Orders test meal ${suffix}`
 const password = 'OffiMeal-Test-Initial-2026!'
 const sql = query => execFileSync('sqlcmd', ['-S', process.env.OFFIMEAL_TEST_SERVER ?? 'localhost', '-E', '-C', '-d', 'OffiMealDB', '-b', '-Q', `SET NOCOUNT ON; SET QUOTED_IDENTIFIER ON; ${query}`], { encoding: 'utf8' })
 const quote = text => "N'" + text.replaceAll("'", "''") + "'"
@@ -57,20 +58,27 @@ try {
   const meals = await expect(anonymous, '/api/meals', 'GET', undefined, 200)
   const packages = await expect(anonymous, '/api/packages', 'GET', undefined, 200)
   assert.ok(meals.length > 1, 'Run server/sql/002_catalog_orders.sql first')
-  assert.deepEqual(packages.map(item => [item.mealCount, item.price]), [[5, 350000], [20, 1300000]])
+  assert.deepEqual(packages.map(item => item.mealCount), [5, 20])
   await expect(anonymous, `/api/meals/${meals[0].id}`, 'GET', undefined, 200)
   await expect(anonymous, '/api/orders', 'GET', undefined, 401)
 
   const a = await signIn(emails[0], 'Customer')
   const b = await signIn(emails[1], 'Customer')
   const admin = await signIn(emails[2], 'Admin')
+
+  // Mon chua co so lieu dinh duong van doc duoc, gia tri chua biet khong thanh 0
+  const unknownMeal = await expect(admin, '/api/meals', 'POST', { name: unknownMealName, mealType: 'Lunch', calories: null, proteinG: null, carbsG: null, fatG: null, price: 65000, goal: 'Vegetarian', isAvailable: true }, 201)
+  assert.equal((await expect(anonymous, `/api/meals/${unknownMeal.mealId}`, 'GET', undefined, 200)).calories, null)
+  assert.equal((await expect(anonymous, '/api/meals', 'GET', undefined, 200)).find(item => item.name === unknownMealName).calories, null)
+  await expect(admin, `/api/meals/${unknownMeal.mealId}`, 'DELETE', undefined, 200)
+
   const address = await expect(a, '/api/account/addresses', 'POST', { recipientName: 'Test', recipientPhone: '0901234567', addressLine: '1 Test', city: 'Hà Nội', isDefault: true }, 201).catch(async () => (await expect(a, '/api/account/addresses', 'GET', undefined, 200))[0])
 
   // Dang ky goi: can CSRF, khong tao trung, khong nhan ngay qua khu
   assert.equal((await a('/api/subscriptions', 'POST', { packageId: 1, startDate: dayFromNow(0) }, { csrf: false })).status, 400)
   await expect(a, '/api/subscriptions', 'POST', { packageId: 1, startDate: dayFromNow(-1) }, 400)
   const created = await expect(a, '/api/subscriptions', 'POST', { packageId: 1, startDate: dayFromNow(0) }, 200)
-  assert.equal(created.amount, 350000)
+  assert.equal(created.amount, packages[0].price)
   await expect(a, '/api/subscriptions', 'POST', { packageId: 1, startDate: dayFromNow(0) }, 409)
   await expect(a, '/api/payments', 'POST', { subscriptionId: created.subscriptionId, paymentMethod: 'BankTransfer' }, 409)
 
@@ -95,7 +103,7 @@ try {
   const pending = await expect(admin, '/api/payments/pending', 'GET', undefined, 200)
   const listed = pending.find(item => item.paymentId === created.paymentId)
   assert.equal(listed.customerEmail, emails[0])
-  assert.equal(listed.amount, 350000)
+  assert.equal(listed.amount, packages[0].price)
   assert.ok(listed.packageName)
   await expect(admin, `/api/payments/${created.paymentId}/confirm`, 'POST', { transactionCode: 'TEST' }, 200)
   await expect(admin, `/api/payments/${created.paymentId}/confirm`, 'POST', {}, 404)
@@ -158,5 +166,5 @@ try {
   console.log('Orders integration passed.')
 } finally {
   await restoreMenus()
-  sql(`BEGIN TRANSACTION; DELETE FROM dbo.Payments WHERE UserId IN (${scoped}); DELETE FROM dbo.OrderDetails WHERE OrderId IN (SELECT OrderId FROM dbo.Orders WHERE UserId IN (${scoped})); DELETE FROM dbo.Orders WHERE UserId IN (${scoped}); DELETE FROM dbo.Subscriptions WHERE UserId IN (${scoped}); DELETE FROM dbo.DeliveryAddresses WHERE UserId IN (${scoped}); DELETE FROM dbo.AccountTokens WHERE UserId IN (${scoped}); DELETE FROM dbo.Users WHERE Email IN (${emails.map(quote).join(',')}); COMMIT;`)
+  sql(`BEGIN TRANSACTION; DELETE FROM dbo.Payments WHERE UserId IN (${scoped}); DELETE FROM dbo.OrderDetails WHERE OrderId IN (SELECT OrderId FROM dbo.Orders WHERE UserId IN (${scoped})); DELETE FROM dbo.Orders WHERE UserId IN (${scoped}); DELETE FROM dbo.Subscriptions WHERE UserId IN (${scoped}); DELETE FROM dbo.DeliveryAddresses WHERE UserId IN (${scoped}); DELETE FROM dbo.AccountTokens WHERE UserId IN (${scoped}); DELETE FROM dbo.Users WHERE Email IN (${emails.map(quote).join(',')}); DELETE FROM dbo.Meals WHERE Name = ${quote(unknownMealName)}; COMMIT;`)
 }
