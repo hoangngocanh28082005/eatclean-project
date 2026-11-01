@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-// Save the original team logo here; all brand placements share this asset.
+// Web-prepared logo based on the team's supplied reference; shared by header and footer.
 const logoUrl = '/logo-offimeal.png'
 
 export default function BrandLogo({ footer = false }: { footer?: boolean }) {
@@ -18,19 +18,13 @@ export default function BrandLogo({ footer = false }: { footer?: boolean }) {
     <img
       src={logoUrl}
       alt="OffiMeal — Healthy Meals · Better You · Every Workday"
-      width={1254}
-      height={1254}
+      width={1454}
+      height={1082}
+      decoding="async"
       className={footer
-        ? 'block h-auto w-52 max-w-full rounded-2xl bg-white'
-        : 'block h-20 w-28 shrink-0 object-contain sm:w-32'}
+        ? 'block h-auto w-60 max-w-full rounded-2xl bg-white p-3 shadow-sm'
+        : 'block h-24 w-36 shrink-0 object-contain sm:h-28 sm:w-44'}
       onError={() => setMissing(true)}
-      onLoad={() => {
-        const favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
-        if (favicon) {
-          favicon.type = 'image/png'
-          favicon.href = logoUrl
-        }
-      }}
     />
   )
 }

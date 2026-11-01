@@ -26,10 +26,12 @@ export function suggestMeals(catalog: Meal[], profile: BodyProfile, dailyKcal: n
     const best = portions[0]
     if (!best) return []
     const text = normalizeFood([meal.name, meal.description, ...(meal.ingredients ?? [])].join(' '))
+    const matchedFavorites = (profile.favorites ?? '').split(/[,;\n]/).map(term => term.trim())
+      .filter((term, index, terms) => term && terms.findIndex(other => normalizeFood(other) === normalizeFood(term)) === index && text.includes(normalizeFood(term)))
     const preferred = favorites.some(term => text.includes(term))
     const goalMatch = meal.tag === (profile.goal === 'lose' ? 'Giảm cân' : profile.goal === 'gain' ? 'Tăng cơ' : '')
     const score = Math.abs(best.kcal - budget) / budget - (preferred ? 0.12 : 0) - (goalMatch ? 0.08 : 0)
-    return [{ meal, ...best, score, preferred, goalMatch, protein: Math.round(meal.protein * best.portion) }]
+    return [{ meal, ...best, score, preferred, matchedFavorites, goalMatch, protein: Math.round(meal.protein * best.portion) }]
   }).sort((a, b) => a.score - b.score || a.meal.id.localeCompare(b.meal.id)).slice(0, 3)
   return { budget, suggestions }
 }

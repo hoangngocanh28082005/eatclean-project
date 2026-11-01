@@ -15,6 +15,9 @@ public sealed class OffiMealDbContext(
     public DbSet<AccountToken> Tokens => Set<AccountToken>();
 
     public DbSet<DeliveryAddress> Addresses => Set<DeliveryAddress>();
+    public DbSet<WorkoutPlan> WorkoutPlans => Set<WorkoutPlan>();
+    public DbSet<WorkoutLog> WorkoutLogs => Set<WorkoutLog>();
+    public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
 
     public DbSet<MealPlan> MealPlans => Set<MealPlan>();
 
@@ -186,5 +189,26 @@ public sealed class OffiMealDbContext(
     .HasOne(s => s.Package)
     .WithMany()
     .HasForeignKey(s => s.PackageId);
+
+        // WORKOUTS
+        modelBuilder.Entity<WorkoutPlan>(entity =>
+        {
+            entity.ToTable("WorkoutPlans", "dbo");
+            entity.HasKey(plan => plan.WorkoutPlanId);
+        });
+        modelBuilder.Entity<WorkoutLog>(entity =>
+        {
+            entity.ToTable("WorkoutLogs", "dbo");
+            entity.HasKey(log => log.WorkoutLogId);
+        });
+        modelBuilder.Entity<UserProfile>(entity =>
+        {
+            entity.ToTable("UserProfiles", "dbo");
+            entity.HasKey(p => p.UserId);
+            entity.Property(p => p.HeightCm).HasPrecision(5, 2);
+            entity.Property(p => p.WeightKg).HasPrecision(5, 2);
+            entity.Property(p => p.Bmr).HasPrecision(8, 2);
+            entity.Property(p => p.Tdee).HasPrecision(8, 2);
+        });
     }
 }

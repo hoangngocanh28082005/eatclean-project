@@ -31,7 +31,7 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-wrap gap-4">
-            <Button to="/thuc-don" size="lg">
+            <Button to="/thuc-don" variant="secondary" size="lg">
               Khám phá thực đơn
               <ArrowRight className="size-4" aria-hidden />
             </Button>

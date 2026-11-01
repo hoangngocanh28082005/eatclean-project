@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink } from 'react-router-dom'
-import { Menu, X, User, ShoppingBag } from 'lucide-react'
+import { Link, NavLink, useLocation } from 'react-router-dom'
+import { Menu, X, User, ShoppingBag, Bell } from 'lucide-react'
 import BrandLogo from '@/shared/components/ui/BrandLogo'
 import { navLinks } from '@/shared/data/navigation'
 import Button from '@/shared/components/ui/Button'
 import { useAuth } from '@/features/accounts/context/AuthContext'
+import NotificationModal from '@/features/workouts/components/NotificationModal'
+import { workoutProgressService } from '@/features/workouts/services/workoutProgressService'
 
 const mobileMenuLinkClasses = ({ isActive }: { isActive: boolean }) =>
   `block rounded-xl px-4 py-3 text-base font-medium transition-colors duration-200 ${
@@ -15,8 +17,30 @@ const mobileMenuLinkClasses = ({ isActive }: { isActive: boolean }) =>
 
 export default function Navbar() {
   const { user } = useAuth()
+  const { pathname } = useLocation()
+  return <NavbarContent key={`${user?.userId ?? 'guest'}:${pathname}`} />
+}
+
+function NavbarContent() {
+  const { user } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const closeMenu = () => setIsMenuOpen(false)
+
+  // In-app notifications state
+  const [isNotifOpen, setIsNotifOpen] = useState(false)
+  const [notifications, setNotifications] = useState(() => workoutProgressService.getNotifications())
+
+  const unreadNotifsCount = notifications.filter((n) => !n.isRead).length
+
+  const handleMarkNotifRead = (id: string) => {
+    workoutProgressService.markNotificationAsRead(id)
+    setNotifications(workoutProgressService.getNotifications())
+  }
+
+  const handleMarkAllNotifsRead = () => {
+    workoutProgressService.markAllNotificationsAsRead()
+    setNotifications(workoutProgressService.getNotifications())
+  }
 
   // Lock body scroll while the mobile menu is open
   // (route changes close the menu via onClick on each NavLink)
@@ -31,9 +55,9 @@ export default function Navbar() {
     'flex size-10 items-center justify-center rounded-full text-forest-900 transition-colors duration-200 hover:bg-sage-100 hover:text-forest-700'
 
   return (
-    <header className="sticky top-0 z-50 border-b border-sage-100 bg-white/90 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-sage-200 bg-white/95 shadow-sm backdrop-blur-md">
       <nav
-        className="mx-auto flex h-24 max-w-7xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8"
+        className="mx-auto flex h-28 sm:h-32 max-w-7xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8"
         aria-label="Điều hướng chính"
       >
         {/* Logo */}
@@ -42,7 +66,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop nav */}
-        <ul className="hidden items-center gap-1 lg:flex">
+        <ul className="hidden items-center gap-1 xl:flex">
           {navLinks.map((link) => (
             <li key={link.to}>
               <NavLink
@@ -64,6 +88,22 @@ export default function Navbar() {
 
         {/* Right actions */}
         <div className="flex items-center gap-1 sm:gap-2">
+          {/* Notification bell button */}
+          <button
+            type="button"
+            onClick={() => setIsNotifOpen(true)}
+            className={`relative ${iconButtonClasses}`}
+            aria-label="Thông báo website"
+            title="Xem thông báo"
+          >
+            <Bell className="size-5" aria-hidden />
+            {unreadNotifsCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 flex size-4 items-center justify-center rounded-full bg-accent-500 text-[9px] font-bold text-forest-900 ring-2 ring-white">
+                {unreadNotifsCount}
+              </span>
+            )}
+          </button>
+
           <Link to={user ? '/tai-khoan' : '/dang-nhap'} onClick={closeMenu} className={iconButtonClasses} aria-label={user ? 'Tài khoản của bạn' : 'Đăng nhập'} title={user ? `Tài khoản: ${user.fullName}` : 'Đăng nhập / Đăng ký'}>
             <User className="size-5" aria-hidden />
           </Link>
@@ -71,14 +111,14 @@ export default function Navbar() {
             <ShoppingBag className="size-5" aria-hidden />
             <span className="absolute hidden">0</span>
           </button>
-          <Button to="/thuc-don" size="sm" className="hidden md:inline-flex">
+          <Button to="/thuc-don" variant="secondary" size="sm" className="hidden md:inline-flex">
             Xem thực đơn
           </Button>
 
           {/* Hamburger */}
           <button
             type="button"
-            className={iconButtonClasses + ' lg:hidden'}
+            className={iconButtonClasses + ' xl:hidden'}
             aria-label={isMenuOpen ? 'Đóng menu' : 'Mở menu'}
             aria-expanded={isMenuOpen}
             onClick={() => setIsMenuOpen((open) => !open)}
@@ -90,7 +130,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="border-t border-sage-100 bg-white lg:hidden">
+        <div className="border-t border-sage-200 bg-white xl:hidden">
           <ul className="mx-auto max-w-7xl space-y-1 px-4 py-4 sm:px-6">
             {navLinks.map((link) => (
               <li key={link.to}>
@@ -110,6 +150,14 @@ export default function Navbar() {
           </ul>
         </div>
       )}
+      {/* Global In-App Notifications Modal */}
+      <NotificationModal
+        isOpen={isNotifOpen}
+        onClose={() => setIsNotifOpen(false)}
+        notifications={notifications}
+        onMarkAsRead={handleMarkNotifRead}
+        onMarkAllAsRead={handleMarkAllNotifsRead}
+      />
     </header>
   )
 }

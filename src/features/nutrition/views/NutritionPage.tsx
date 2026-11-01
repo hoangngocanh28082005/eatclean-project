@@ -130,7 +130,7 @@ export default function NutritionPage() {
           >
             <div
               ref={resultRef}
-              className="mx-auto max-w-5xl scroll-mt-24 px-4 sm:px-6 lg:px-8"
+              className="mx-auto max-w-5xl scroll-mt-36 px-4 sm:px-6 lg:px-8"
             >
               <h2
                 id="nutrition-result-title"
@@ -165,14 +165,18 @@ export default function NutritionPage() {
                   </p>
                 </div>
                 <Button to="/thuc-don" variant="outline" className="shrink-0">
-                  Xem thực đơn
+                  Trang thực đơn
                   <ArrowRight className="size-4" aria-hidden />
                 </Button>
               </div>
 
               {!suggestedMeals.length && <p role="status" className="rounded-2xl bg-cream-100 p-5 text-forest-900">{profile.allergies?.trim() ? 'Chưa có món với dữ liệu nguyên liệu và dị ứng đã xác minh để gợi ý. Hãy liên hệ bếp để xác nhận thành phần và nguy cơ nhiễm chéo.' : 'Chưa có món đáp ứng đồng thời ngân sách và lựa chọn ăn uống. Bạn có thể cập nhật hồ sơ hoặc tỷ lệ bữa trưa; hệ thống không tự bỏ bộ lọc.'}</p>}
+              <p className="mb-4 text-sm leading-relaxed text-forest-900/70">Gợi ý hiện dựa trên danh sách món mẫu, đối chiếu tên món, mô tả và nguyên liệu đã có. Trang thực đơn đang được hoàn thiện; sở thích chưa được áp dụng thành bộ lọc tại trang đó.</p>
+              {profile.favorites?.trim() && suggestedMeals.length > 0 && !suggestedMeals.some(item => item.preferred) && (
+                <p role="status" className="mb-4 rounded-xl bg-cream-100 p-4 text-sm text-forest-900">Các món gợi ý hiện chưa khớp nguyên liệu yêu thích “{profile.favorites}”. Đây là các lựa chọn khác phù hợp với hồ sơ và mức calo bữa trưa.</p>
+              )}
               <ul className="grid gap-4 sm:grid-cols-3">
-                {suggestedMeals.map(({ meal, portion, kcal, protein, preferred, goalMatch }) => (
+                {suggestedMeals.map(({ meal, portion, kcal, protein, matchedFavorites, goalMatch }) => (
                   <li
                     key={meal.id}
                     className="flex items-center gap-4 rounded-2xl bg-cream-100 p-4"
@@ -188,7 +192,7 @@ export default function NutritionPage() {
                         {portion.toLocaleString('vi-VN')} suất · {kcal} kcal · {protein} g đạm
                       </p>
                       <p className="mt-1 text-xs text-forest-900/60">Giá suất chuẩn: {formatPrice(meal.price)}</p>
-                      <p className="mt-2 text-xs text-forest-700">{preferred ? 'Có nguyên liệu yêu thích. ' : ''}{goalMatch ? 'Phù hợp mục tiêu đã chọn. ' : ''}Trong ngân sách bữa trưa.</p>
+                      <p className="mt-2 text-xs text-forest-700">{matchedFavorites.length ? `Khớp sở thích: ${matchedFavorites.join(', ')}. ` : ''}{goalMatch ? 'Phù hợp mục tiêu đã chọn. ' : ''}Trong ngân sách bữa trưa.</p>
                     </div>
                   </li>
                 ))}
