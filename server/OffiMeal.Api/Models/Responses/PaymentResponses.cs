@@ -12,3 +12,14 @@ public record PaymentResponse(
     DateTime? PaidAt,
     DateTime CreatedAt
 );
+
+public record PendingPaymentResponse(
+    int PaymentId,
+    int? SubscriptionId,
+    string? PackageName,
+    string CustomerName,
+    string CustomerEmail,
+    string? CustomerPhone,
+    decimal Amount,
+    DateTime CreatedAt
+);

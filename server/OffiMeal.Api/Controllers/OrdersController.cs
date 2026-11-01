@@ -16,6 +16,14 @@ namespace OffiMeal.Api.Controllers;
 [Authorize]
 public class OrdersController : ControllerBase
 {
+    // Trang thai dich -> trang thai lien truoc: don chi di tung buoc, khong nhay coc
+    private static readonly Dictionary<string, string> PreviousStatus = new()
+    {
+        ["Confirmed"] = "Pending",
+        ["Delivering"] = "Confirmed",
+        ["Delivered"] = "Delivering"
+    };
+
     private readonly OffiMealDbContext _context;
 
     public OrdersController(OffiMealDbContext context)
@@ -169,6 +177,110 @@ public class OrdersController : ControllerBase
             orderId = order.OrderId,
             remainingMeals = subscription.RemainingMeals - mealsUsed
         });
+    }
+
+    // GET: api/orders/manage
+    // Admin xem don cua moi khach, ngay giao gan nhat len dau
+    [HttpGet("manage")]
+    [Authorize(Policy = AccountSession.AdminPolicy)]
+    public async Task<IActionResult> GetManagedOrders()
+    {
+        var orders = await (
+            from o in _context.Orders.AsNoTracking()
+            join u in _context.Users on o.UserId equals u.UserId
+            join a in _context.Addresses on o.AddressId equals a.AddressId
+            orderby o.DeliveryDate, o.OrderId
+            select new { Order = o, u.FullName, u.Email, Address = a }
+        ).ToListAsync();
+
+        var orderIds = orders.Select(x => x.Order.OrderId).ToList();
+
+        var details = await _context.OrderDetails
+            .AsNoTracking()
+            .Where(d => orderIds.Contains(d.OrderId))
+            .Join(
+                _context.Meals,
+                d => d.MealId,
+                m => m.MealId,
+                (d, m) => new { d.OrderId, m.Name, d.Quantity })
+            .ToListAsync();
+
+        var items = details.ToLookup(d => d.OrderId);
+
+        var result = orders.Select(x => new ManagedOrderResponse(
+            x.Order.OrderId,
+            x.Order.DeliveryDate,
+            x.Order.DeliverySlot,
+            x.Order.Status,
+            x.Order.Note,
+            x.FullName,
+            x.Email,
+            x.Address.RecipientName,
+            x.Address.RecipientPhone,
+            x.Address.AddressLine,
+            x.Address.Ward,
+            x.Address.District,
+            x.Address.City,
+            items[x.Order.OrderId]
+                .Select(d => new ManagedOrderItemResponse(d.Name, d.Quantity))
+                .ToList()
+        ));
+
+        return Ok(result);
+    }
+
+    // PATCH: api/orders/1/status
+    // Admin chuyen don sang buoc tiep theo
+    [HttpPatch("{id:int}/status")]
+    [Authorize(Policy = AccountSession.AdminPolicy)]
+    public async Task<IActionResult> UpdateStatus(
+        int id,
+        UpdateOrderStatusRequest request)
+    {
+        if (!PreviousStatus.TryGetValue(request.Status, out var previous))
+        {
+            return BadRequest(new { message = "Trạng thái đơn không hợp lệ." });
+        }
+
+        // Dieu kien nam trong cau UPDATE de hai admin bam cung luc khong the cung thanh cong
+        int updated = await _context.Orders
+            .Where(o => o.OrderId == id && o.Status == previous)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(o => o.Status, request.Status));
+
+        if (updated == 0)
+        {
+            return NotFound(new
+            {
+                message = "Không tìm thấy đơn ở bước phù hợp. Vui lòng tải lại danh sách."
+            });
+        }
+
+        return Ok(new { message = "Đã cập nhật trạng thái đơn." });
+    }
+
+    // POST: api/orders/1/received
+    // Khach xac nhan da nhan bua khi don dang giao
+    [HttpPost("{id:int}/received")]
+    public async Task<IActionResult> ConfirmReceived(int id)
+    {
+        int userId = AccountSession.UserId(User);
+
+        int updated = await _context.Orders
+            .Where(o =>
+                o.OrderId == id &&
+                o.UserId == userId &&
+                o.Status == "Delivering")
+            .ExecuteUpdateAsync(setters => setters.SetProperty(o => o.Status, "Delivered"));
+
+        if (updated == 0)
+        {
+            return NotFound(new
+            {
+                message = "Không tìm thấy đơn đang giao."
+            });
+        }
+
+        return Ok(new { message = "Đã xác nhận nhận hàng." });
     }
 
     // GET: api/orders

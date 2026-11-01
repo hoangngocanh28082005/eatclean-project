@@ -77,8 +77,16 @@ try {
   // Chua thanh toan thi chua dat bua; khach khong tu xac nhan duoc
   await expect(a, '/api/orders', 'POST', order, 400)
   await expect(a, `/api/payments/${created.paymentId}/confirm`, 'POST', {}, 403)
+  await expect(a, '/api/payments/pending', 'GET', undefined, 403)
+  const pending = await expect(admin, '/api/payments/pending', 'GET', undefined, 200)
+  const listed = pending.find(item => item.paymentId === created.paymentId)
+  assert.equal(listed.customerEmail, emails[0])
+  assert.equal(listed.amount, 350000)
+  assert.ok(listed.packageName)
   await expect(admin, `/api/payments/${created.paymentId}/confirm`, 'POST', { transactionCode: 'TEST' }, 200)
   await expect(admin, `/api/payments/${created.paymentId}/confirm`, 'POST', {}, 404)
+  const remaining = await expect(admin, '/api/payments/pending', 'GET', undefined, 200)
+  assert.ok(!remaining.some(item => item.paymentId === created.paymentId))
   await expect(a, '/api/payments', 'POST', { subscriptionId: created.subscriptionId, paymentMethod: 'BankTransfer' }, 400)
 
   // Dat bua: tru so bua, khong thu them tien, moi ngay mot don, trong thoi han goi
@@ -93,6 +101,33 @@ try {
   const [saved] = await expect(a, '/api/orders', 'GET', undefined, 200)
   assert.equal(saved.totalAmount, 0)
   assert.equal(saved.items[0].mealName, meals[0].name)
+
+  // Xu ly don: chi admin, tung buoc mot; khach xac nhan don dang giao cua chinh minh
+  const status = (id, value) => [`/api/orders/${id}/status`, 'PATCH', { status: value }]
+  const received = id => [`/api/orders/${id}/received`, 'POST', undefined]
+  const statusOf = async id => (await expect(a, `/api/orders/${id}`, 'GET', undefined, 200)).status
+  await expect(a, '/api/orders/manage', 'GET', undefined, 403)
+  await expect(a, ...status(saved.orderId, 'Confirmed'), 403)
+  const managed = (await expect(admin, '/api/orders/manage', 'GET', undefined, 200)).find(item => item.orderId === saved.orderId)
+  assert.equal(managed.customerEmail, emails[0])
+  assert.equal(managed.items[0].mealName, meals[0].name)
+  await expect(admin, ...status(saved.orderId, 'Preparing'), 400)
+  await expect(admin, ...status(saved.orderId, 'Delivered'), 404)
+  await expect(a, ...received(saved.orderId), 404)
+  await expect(admin, ...status(saved.orderId, 'Confirmed'), 200)
+  await expect(admin, ...status(saved.orderId, 'Confirmed'), 404)
+  await expect(admin, ...status(saved.orderId, 'Delivering'), 200)
+  await expect(b, ...received(saved.orderId), 404)
+  await expect(a, ...received(saved.orderId), 200)
+  await expect(a, ...received(saved.orderId), 404)
+  assert.equal(await statusOf(saved.orderId), 'Delivered')
+
+  // Khach quen bam nhan hang thi admin van dong duoc don
+  const second = await expect(a, '/api/orders', 'POST', { ...order, deliveryDate: dayFromNow(2) }, 200)
+  await expect(admin, ...status(second.orderId, 'Confirmed'), 200)
+  await expect(admin, ...status(second.orderId, 'Delivering'), 200)
+  await expect(admin, ...status(second.orderId, 'Delivered'), 200)
+  assert.equal(await statusOf(second.orderId), 'Delivered')
 
   // Khong doc hoac dung du lieu cua nguoi khac
   await expect(b, `/api/subscriptions/${created.subscriptionId}`, 'GET', undefined, 404)

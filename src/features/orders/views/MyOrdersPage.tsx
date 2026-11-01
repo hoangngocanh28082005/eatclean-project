@@ -4,6 +4,8 @@ import { formatPrice } from '@/features/catalog/data/labels'
 import { Feedback, panelClass } from '@/shared/components/forms/AccountFields'
 import Button from '@/shared/components/ui/Button'
 import { errorMessage } from '@/shared/services/httpClient'
+import BankTransferPanel from '../components/BankTransferPanel'
+import { orderLabels } from '../data/orderLabels'
 import type { MealOrder, Payment, Subscription } from '../models/Order'
 import { formatDate, orderService } from '../services/orderService'
 
@@ -12,14 +14,6 @@ const subscriptionLabels: Record<string, string> = {
   Active: 'Đang hoạt động',
   Paused: 'Tạm dừng',
   Completed: 'Đã kết thúc',
-  Cancelled: 'Đã hủy',
-}
-const orderLabels: Record<string, string> = {
-  Pending: 'Chờ xác nhận',
-  Confirmed: 'Đã xác nhận',
-  Preparing: 'Đang chuẩn bị',
-  Delivering: 'Đang giao',
-  Delivered: 'Đã giao',
   Cancelled: 'Đã hủy',
 }
 
@@ -33,6 +27,8 @@ export default function MyOrdersPage() {
   const { user, loading } = useAuth()
   const [data, setData] = useState<OrdersData | null>(null)
   const [error, setError] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [busyOrderId, setBusyOrderId] = useState<number | null>(null)
 
   const load = useCallback(async () => {
     setError('')
@@ -63,6 +59,18 @@ export default function MyOrdersPage() {
   const pendingPayment = (subscription: Subscription) =>
     data?.payments.find((payment) => payment.subscriptionId === subscription.subscriptionId && payment.status === 'Pending')
 
+  const confirmReceived = async (orderId: number) => {
+    setBusyOrderId(orderId)
+    setActionError('')
+    try {
+      await orderService.confirmReceived(orderId)
+    } catch (e) {
+      setActionError(errorMessage(e))
+    }
+    await load()
+    setBusyOrderId(null)
+  }
+
   return (
     <section className="bg-cream-100 px-4 py-12">
       <div className="mx-auto max-w-4xl space-y-7">
@@ -91,11 +99,7 @@ export default function MyOrdersPage() {
                         <p className="text-sm">
                           {formatDate(subscription.startDate)} – {formatDate(subscription.endDate)} · Còn {subscription.remainingMeals}/{subscription.mealCount} bữa · {formatPrice(subscription.totalPrice)}
                         </p>
-                        {payment && (
-                          <p className="text-sm text-forest-900/70">
-                            Vui lòng chuyển khoản {formatPrice(payment.amount)} với nội dung OFFIMEAL{payment.paymentId}. Gói được kích hoạt sau khi OffiMeal xác nhận.
-                          </p>
-                        )}
+                        {payment && <BankTransferPanel payment={payment} />}
                         {subscription.status === 'Active' && subscription.remainingMeals > 0 && (
                           <Button to={`/don-hang/dat-bua/${subscription.subscriptionId}`} size="sm">Đặt bữa</Button>
                         )}
@@ -113,16 +117,22 @@ export default function MyOrdersPage() {
 
             <div className={panelClass}>
               <h2 className="text-xl font-bold">Lịch giao</h2>
+              <Feedback error={actionError} />
               {data.orders.length ? (
                 <ul className="space-y-3">
                   {data.orders.map((order) => (
-                    <li key={order.orderId} className="rounded-xl bg-cream-100 p-4">
+                    <li key={order.orderId} className="space-y-2 rounded-xl bg-cream-100 p-4">
                       <div className="flex flex-wrap justify-between gap-2">
                         <span className="font-semibold">Đơn #{order.orderId} · {formatDate(order.deliveryDate)}</span>
                         <span className="text-sm">{orderLabels[order.status] ?? order.status}</span>
                       </div>
                       <p className="text-sm">{order.items.map((item) => `${item.mealName} × ${item.quantity}`).join(', ')}</p>
                       {order.note && <p className="text-sm text-forest-900/70">Ghi chú: {order.note}</p>}
+                      {order.status === 'Delivering' && (
+                        <Button size="sm" disabled={busyOrderId !== null} onClick={() => void confirmReceived(order.orderId)}>
+                          {busyOrderId === order.orderId ? 'Đang xác nhận…' : 'Đã nhận hàng'}
+                        </Button>
+                      )}
                     </li>
                   ))}
                 </ul>

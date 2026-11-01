@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/features/accounts/context/AuthContext'
+import { orderLabels } from '@/features/orders/data/orderLabels'
 import { AccountField, Feedback, panelClass } from '@/shared/components/forms/AccountFields'
 import Button from '@/shared/components/ui/Button'
 import { errorMessage } from '@/shared/services/httpClient'
@@ -8,7 +9,6 @@ import { accountService } from '../services/accountService'
 import { authService } from '../services/authService'
 import type { Address, Order } from '../models/Account'
 
-const orderLabels: Record<string, string> = { Pending: 'Chờ xác nhận', Confirmed: 'Đã xác nhận', Preparing: 'Đang chuẩn bị', Delivering: 'Đang giao', Delivered: 'Đã giao', Cancelled: 'Đã hủy' }
 export default function AccountPage() {
   const { user, loading, error: sessionError, refresh, logout } = useAuth()
   const [addresses, setAddresses] = useState<Address[]>([])

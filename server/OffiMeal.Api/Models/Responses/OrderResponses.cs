@@ -20,3 +20,25 @@ public record OrderResponse(
     string? Note,
     List<OrderItemResponse> Items
 );
+
+public record ManagedOrderItemResponse(
+    string MealName,
+    int Quantity
+);
+
+public record ManagedOrderResponse(
+    int OrderId,
+    DateTime DeliveryDate,
+    string? DeliverySlot,
+    string Status,
+    string? Note,
+    string CustomerName,
+    string CustomerEmail,
+    string RecipientName,
+    string RecipientPhone,
+    string AddressLine,
+    string? Ward,
+    string? District,
+    string City,
+    List<ManagedOrderItemResponse> Items
+);

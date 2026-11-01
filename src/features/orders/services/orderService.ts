@@ -16,6 +16,8 @@ export const orderService = {
       method: 'POST',
       body: JSON.stringify(input),
     }),
+  confirmReceived: (id: number) =>
+    api<{ message: string }>(`/api/orders/${id}/received`, { method: 'POST' }),
 }
 
 /** Ngày theo giờ máy người dùng, dạng dùng được cho input type="date". */

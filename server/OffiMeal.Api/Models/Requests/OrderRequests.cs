@@ -14,3 +14,7 @@ public record OrderItemRequest(
     int MealId,
     int Quantity
 );
+
+public record UpdateOrderStatusRequest(
+    string Status
+);

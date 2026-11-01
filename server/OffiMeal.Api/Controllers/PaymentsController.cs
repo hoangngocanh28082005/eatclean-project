@@ -208,6 +208,38 @@ public class PaymentsController : ControllerBase
         return Ok(new { message = "Đã xác nhận thanh toán." });
     }
 
+    // GET: api/payments/pending
+    // Admin xem cac khoan cho doi soat, khoan cu nhat len dau
+    [HttpGet("pending")]
+    [Authorize(Policy = AccountSession.AdminPolicy)]
+    public async Task<IActionResult> GetPendingPayments()
+    {
+        var payments = await _context.Payments
+            .AsNoTracking()
+            .Where(p => p.Status == "Pending")
+            .OrderBy(p => p.CreatedAt)
+            .Join(
+                _context.Users,
+                p => p.UserId,
+                u => u.UserId,
+                (p, u) => new PendingPaymentResponse(
+                    p.PaymentId,
+                    p.SubscriptionId,
+                    _context.Subscriptions
+                        .Where(s => s.SubscriptionId == p.SubscriptionId)
+                        .Select(s => s.Package.Name)
+                        .FirstOrDefault(),
+                    u.FullName,
+                    u.Email,
+                    u.Phone,
+                    p.Amount,
+                    p.CreatedAt
+                ))
+            .ToListAsync();
+
+        return Ok(payments);
+    }
+
     // GET: api/payments
     [HttpGet]
     public async Task<IActionResult> GetUserPayments()

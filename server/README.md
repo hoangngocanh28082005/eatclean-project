@@ -38,8 +38,13 @@ Cấu hình Development sử dụng Windows Authentication tới SQL Server trê
 - Đã có API và giao diện tài khoản, xác minh/khôi phục mật khẩu, địa chỉ và đọc đơn theo người đăng nhập. Xem [ACCOUNTS.md](ACCOUNTS.md) để chạy schema bổ sung, kiểm thử thư local và cấu hình SMTP. Trang dinh dưỡng vẫn dùng hồ sơ localStorage, chưa có API lưu thể trạng.
 - Database mới trả `[]` ở `/api/meals` cho đến khi chạy `002_catalog_orders.sql`.
 - POST `/api/subscriptions`: tạo gói `Pending` kèm khoản thanh toán `Pending`.
+- GET `/api/payments/pending` (Admin): các khoản đang chờ đối soát, kèm thông tin khách. Giao diện ở `/quan-tri`.
 - POST `/api/payments/{id}/confirm` (Admin): xác nhận thanh toán, chuyển gói sang `Active`.
+- Thông tin tài khoản nhận tiền và mã VietQR hiện ở trang Đơn hàng lấy từ `src/features/orders/data/bankAccount.ts`.
 - POST `/api/orders`: đặt một lần giao trong gói `Active`, trừ `RemainingMeals`, không thu thêm tiền.
+- GET `/api/orders/manage` (Admin): đơn của mọi khách, kèm địa chỉ giao. Giao diện ở `/quan-tri`.
+- PATCH `/api/orders/{id}/status` (Admin): chuyển đơn từng bước `Pending → Confirmed → Delivering → Delivered`.
+- POST `/api/orders/{id}/received`: khách xác nhận đã nhận đơn đang giao của chính mình, chuyển sang `Delivered`.
 
 ## Bước tiếp theo
 
