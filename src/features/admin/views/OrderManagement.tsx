@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { orderLabels } from '@/features/orders/data/orderLabels'
-import { formatDate } from '@/features/orders/services/orderService'
+import { formatDate, toDateInput } from '@/features/orders/services/orderService'
 import { Feedback, panelClass } from '@/shared/components/forms/AccountFields'
 import Button from '@/shared/components/ui/Button'
 import { errorMessage } from '@/shared/services/httpClient'
@@ -17,6 +17,7 @@ const fullAddress = (order: ManagedOrder) =>
   [order.addressLine, order.ward, order.district, order.city].filter(Boolean).join(', ')
 
 export default function OrderManagement() {
+  const [today] = useState(() => toDateInput(new Date()))
   const [orders, setOrders] = useState<ManagedOrder[] | null>(null)
   const [showDone, setShowDone] = useState(false)
   const [busyId, setBusyId] = useState<number | null>(null)
@@ -65,6 +66,7 @@ export default function OrderManagement() {
         <ul className="space-y-4">
           {visible.map((order) => {
             const step = nextStep[order.status]
+            const notDueYet = step?.status === 'Delivered' && order.deliveryDate.slice(0, 10) > today
             return (
               <li key={order.orderId} className="space-y-2 rounded-2xl bg-cream-100 p-4">
                 <div className="flex flex-wrap justify-between gap-2">
@@ -78,10 +80,11 @@ export default function OrderManagement() {
                 <p className="text-sm break-words text-forest-900/70">Khách: {order.customerName} · {order.customerEmail}</p>
                 {order.note && <p className="text-sm text-forest-900/70">Ghi chú: {order.note}</p>}
                 {step && (
-                  <Button size="sm" disabled={busyId !== null} onClick={() => void advance(order)}>
+                  <Button size="sm" disabled={busyId !== null || notDueYet} onClick={() => void advance(order)}>
                     {busyId === order.orderId ? 'Đang cập nhật…' : step.label}
                   </Button>
                 )}
+                {notDueYet && <p className="text-sm text-forest-900/70">Bấm được từ ngày {formatDate(order.deliveryDate)}.</p>}
               </li>
             )
           })}

@@ -242,6 +242,19 @@ public class OrdersController : ControllerBase
             return BadRequest(new { message = "Trạng thái đơn không hợp lệ." });
         }
 
+        if (request.Status == "Delivered")
+        {
+            bool notDueYet = await _context.Orders.AnyAsync(o =>
+                o.OrderId == id &&
+                o.Status == previous &&
+                o.DeliveryDate > DateTime.Today);
+
+            if (notDueYet)
+            {
+                return BadRequest(new { message = "Chưa tới ngày giao nên chưa đánh dấu đã giao được." });
+            }
+        }
+
         // Dieu kien nam trong cau UPDATE de hai admin bam cung luc khong the cung thanh cong
         int updated = await _context.Orders
             .Where(o => o.OrderId == id && o.Status == previous)

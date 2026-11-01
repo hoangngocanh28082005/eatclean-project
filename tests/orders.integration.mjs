@@ -122,10 +122,13 @@ try {
   await expect(a, ...received(saved.orderId), 404)
   assert.equal(await statusOf(saved.orderId), 'Delivered')
 
-  // Khach quen bam nhan hang thi admin van dong duoc don
+  // Khach quen bam nhan hang thi admin van dong duoc don, nhung chi tu ngay giao
   const second = await expect(a, '/api/orders', 'POST', { ...order, deliveryDate: dayFromNow(2) }, 200)
   await expect(admin, ...status(second.orderId, 'Confirmed'), 200)
   await expect(admin, ...status(second.orderId, 'Delivering'), 200)
+  await expect(admin, ...status(second.orderId, 'Delivered'), 400)
+  assert.equal(await statusOf(second.orderId), 'Delivering')
+  sql(`UPDATE dbo.Orders SET DeliveryDate = ${quote(dayFromNow(0))} WHERE OrderId = ${second.orderId};`)
   await expect(admin, ...status(second.orderId, 'Delivered'), 200)
   assert.equal(await statusOf(second.orderId), 'Delivered')
 

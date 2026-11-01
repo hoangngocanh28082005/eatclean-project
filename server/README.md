@@ -43,7 +43,7 @@ Cấu hình Development sử dụng Windows Authentication tới SQL Server trê
 - Thông tin tài khoản nhận tiền và mã VietQR hiện ở trang Đơn hàng lấy từ `src/features/orders/data/bankAccount.ts`.
 - POST `/api/orders`: đặt một lần giao trong gói `Active`, trừ `RemainingMeals`, không thu thêm tiền.
 - GET `/api/orders/manage` (Admin): đơn của mọi khách, kèm địa chỉ giao. Giao diện ở `/quan-tri`.
-- PATCH `/api/orders/{id}/status` (Admin): chuyển đơn từng bước `Pending → Confirmed → Delivering → Delivered`.
+- PATCH `/api/orders/{id}/status` (Admin): chuyển đơn từng bước `Pending → Confirmed → Delivering → Delivered`. Chỉ đánh dấu `Delivered` được từ ngày giao.
 - POST `/api/orders/{id}/received`: khách xác nhận đã nhận đơn đang giao của chính mình, chuyển sang `Delivered`.
 
 ## Bước tiếp theo
