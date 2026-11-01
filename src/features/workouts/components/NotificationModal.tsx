@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Bell,
   Truck,
@@ -32,6 +33,19 @@ export default function NotificationModal({
   onMarkAllAsRead,
 }: NotificationModalProps) {
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    const dialog = dialogRef.current
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    dialog?.showModal()
+    return () => {
+      dialog?.close()
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -42,21 +56,21 @@ export default function NotificationModal({
 
   const unreadCount = notifications.filter((n) => !n.isRead).length
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
-      <div className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-sage-200">
+  return createPortal(
+    <dialog ref={dialogRef} aria-labelledby="notification-dialog-title" onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose() }} className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-hidden rounded-3xl border-0 bg-white p-0 text-forest-900 shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-xs">
+      <div className="flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-sage-100 p-5">
+        <div className="flex shrink-0 items-center justify-between border-b border-sage-100 p-5">
           <div className="flex items-center gap-2.5">
             <div className="relative">
               <Bell className="size-5 text-forest-800" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex size-3 items-center justify-center rounded-full bg-accent-500 text-[8px] font-bold text-white">
+                <span className="absolute -top-1 -right-1 flex size-3 items-center justify-center rounded-full bg-accent-500 text-[8px] font-bold text-forest-900">
                   {unreadCount}
                 </span>
               )}
             </div>
-            <h3 className="text-base font-bold text-forest-900">Thông báo website</h3>
+            <h3 id="notification-dialog-title" className="text-base font-bold text-forest-900">Thông báo website</h3>
           </div>
 
           <div className="flex items-center gap-2">
@@ -73,6 +87,7 @@ export default function NotificationModal({
             <button
               type="button"
               onClick={onClose}
+              aria-label="Đóng thông báo"
               className="rounded-full p-1.5 text-forest-900/40 hover:bg-sage-100 hover:text-forest-900"
             >
               <X className="size-5" />
@@ -107,7 +122,7 @@ export default function NotificationModal({
         </div>
 
         {/* Notifications List */}
-        <div className="flex-1 overflow-y-auto divide-y divide-sage-100 p-2">
+        <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-sage-100 p-2">
           {filtered.length === 0 ? (
             <p className="py-12 text-center text-xs text-forest-900/50">
               Không có thông báo nào.
@@ -125,7 +140,7 @@ export default function NotificationModal({
                   {typeIcons[item.type]}
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <h4
                       className={`text-xs font-bold ${item.isRead ? 'text-forest-900/80' : 'text-forest-900'}`}
                     >
@@ -145,6 +160,7 @@ export default function NotificationModal({
           )}
         </div>
       </div>
-    </div>
+    </dialog>,
+    document.body,
   )
 }

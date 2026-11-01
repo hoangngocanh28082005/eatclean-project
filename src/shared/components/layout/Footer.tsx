@@ -132,6 +132,46 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-forest-600">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 px-4 py-8 sm:flex-row sm:items-center sm:px-6 lg:px-8">
+          <div className="max-w-xl space-y-2">
+            <h3 className="text-sm font-bold tracking-wider text-white uppercase">
+              Thông tin pháp lý
+            </h3>
+            <p className="text-sm leading-relaxed text-sage-100/80">
+              Thông tin thông báo website thương mại điện tử với Bộ Công Thương.
+            </p>
+            <a
+              href="https://online.gov.vn/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-sage-100 underline underline-offset-4 transition-colors hover:text-accent-400 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sage-100"
+            >
+              Cổng thông tin Bộ Công Thương
+              <ArrowRight className="size-3.5 -rotate-45" aria-hidden />
+              <span className="sr-only"> (mở trong tab mới)</span>
+            </a>
+          </div>
+          {/* Replace with OffiMeal's verified WebDetails URL when available. */}
+          <a
+            href="https://online.gov.vn/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Thông báo website với Bộ Công Thương — mở cổng online.gov.vn trong tab mới"
+            className="inline-flex w-full max-w-[260px] shrink-0 items-center justify-center self-center rounded-xl bg-white px-4 py-3 transition-shadow hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sage-100 sm:w-auto sm:self-auto"
+          >
+            <img
+              src="/bo-cong-thuong-notified.png"
+              alt="Đã thông báo Bộ Công Thương"
+              width={600}
+              height={227}
+              loading="lazy"
+              className="h-auto w-full sm:w-56"
+            />
+          </a>
+        </div>
+      </div>
+
+      <div className="border-t border-forest-600">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs text-sage-100/70 sm:flex-row sm:px-6 lg:px-8">
           <p>© {currentYear} OffiMeal. Bảo lưu mọi quyền.</p>
           <p>Ăn lành mạnh, sống nhẹ nhàng hơn.</p>

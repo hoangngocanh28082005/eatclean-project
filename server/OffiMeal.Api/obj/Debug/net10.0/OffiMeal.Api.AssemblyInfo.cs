@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("OffiMeal.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+64d6fb8c55b72de8732f7ef126f2e8f66f2c369a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+356213569e132e77dcd566d9295121e20b0c79f8")]
 [assembly: System.Reflection.AssemblyProductAttribute("OffiMeal.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("OffiMeal.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

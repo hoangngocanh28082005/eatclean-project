@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/features/accounts/context/AuthContext'
 import { useState, useMemo } from 'react'
 import {
   Dumbbell,
@@ -18,6 +20,18 @@ import { workoutProgressService } from '../services/workoutProgressService'
 import { loadProfile } from '@/features/nutrition/services/profileStorage'
 
 export default function WorkoutsPage() {
+  const { user } = useAuth()
+  return <WorkoutsContent key={user?.userId ?? 'guest'} />
+}
+
+function WorkoutsContent() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const requireLogin = () => {
+    if (user) return false
+    navigate('/dang-nhap')
+    return true
+  }
   // Navigation tab
   const [activeTab, setActiveTab] = useState<'workouts' | 'progress' | 'meals' | 'reminders'>('workouts')
 
@@ -89,6 +103,7 @@ export default function WorkoutsPage() {
 
   // Handlers
   const handleLogWorkout = (video: WorkoutVideo) => {
+    if (requireLogin()) return
     const newLog = workoutProgressService.addWorkoutLog({
       workoutId: video.id,
       workoutTitle: video.name,
@@ -107,6 +122,7 @@ export default function WorkoutsPage() {
     calories?: number,
     note?: string
   ) => {
+    if (requireLogin()) return
     const newLog = workoutProgressService.addWorkoutLog({
       workoutId: 'custom-' + Date.now(),
       workoutTitle: title,
@@ -120,11 +136,13 @@ export default function WorkoutsPage() {
   }
 
   const handleAddWeight = (weightKg: number, date?: string, note?: string) => {
+    if (requireLogin()) return
     workoutProgressService.addWeightLog(weightKg, date, note)
     setWeightLogs(workoutProgressService.getWeightLogs())
   }
 
   const handleDeleteWeight = (id: string) => {
+    if (requireLogin()) return
     workoutProgressService.deleteWeightLog(id)
     setWeightLogs(workoutProgressService.getWeightLogs())
   }
@@ -135,6 +153,7 @@ export default function WorkoutsPage() {
   }
 
   const handleToggleMeal = (id: string) => {
+    if (requireLogin()) return
     workoutProgressService.toggleMealConsumed(id)
     setMealLogs(workoutProgressService.getMealLogsForDate(selectedMealDate))
   }
@@ -189,7 +208,7 @@ export default function WorkoutsPage() {
                 <Bell className="size-4 text-forest-700" />
                 <span>Thông báo website</span>
                 {unreadNotifsCount > 0 && (
-                  <span className="flex size-5 items-center justify-center rounded-full bg-accent-500 text-[10px] font-bold text-white">
+                  <span className="flex size-5 items-center justify-center rounded-full bg-accent-500 text-[10px] font-bold text-forest-900">
                     {unreadNotifsCount}
                   </span>
                 )}

@@ -8,6 +8,7 @@ import {
   type WorkoutVideo,
 } from '@/features/workouts/data/workouts'
 import { goalLabels } from '@/features/nutrition/services/nutritionCalculator'
+import { useAuth } from '@/features/accounts/context/AuthContext'
 
 interface WorkoutVideoCardProps {
   video: WorkoutVideo
@@ -27,6 +28,7 @@ export default function WorkoutVideoCard({
   isRecentlyLogged = false,
 }: WorkoutVideoCardProps) {
   const [isPlaying, setIsPlaying] = useState(false)
+  const { user } = useAuth()
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-sage-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
@@ -119,6 +121,7 @@ export default function WorkoutVideoCard({
           {onLogCompleted && (
             <button
               type="button"
+              disabled={Boolean(user && isRecentlyLogged)}
               onClick={() => onLogCompleted(video)}
               className={`flex w-full items-center justify-center gap-2 rounded-2xl py-2 text-xs font-bold transition-all ${
                 isRecentlyLogged
@@ -127,7 +130,7 @@ export default function WorkoutVideoCard({
               }`}
             >
               <CheckCircle2 className={`size-4 ${isRecentlyLogged ? 'text-forest-700' : 'text-sage-300'}`} />
-              {isRecentlyLogged ? 'Đã hoàn thành hôm nay' : 'Đánh dấu đã hoàn thành'}
+              {!user ? 'Đăng nhập để lưu buổi tập' : isRecentlyLogged ? 'Đã hoàn thành hôm nay' : 'Đánh dấu đã hoàn thành'}
             </button>
           )}
         </div>
